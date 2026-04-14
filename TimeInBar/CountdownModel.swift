@@ -102,11 +102,6 @@ final class CountdownModel: ObservableObject {
         }
     }
 
-    func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-    }
-
     func quitApp() {
         NSApp.terminate(nil)
     }

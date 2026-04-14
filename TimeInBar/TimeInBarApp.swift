@@ -11,8 +11,9 @@ struct TimeInBarApp: App {
             MenuBarLabelView(snapshot: countdownModel.snapshot)
         }
 
-        Settings {
+        Window("Preferences", id: "settings") {
             SettingsView(model: countdownModel)
+                .frame(minWidth: 420, minHeight: 220)
         }
     }
 }

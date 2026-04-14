@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct MenuBarLabelView: View {
     let snapshot: StatusSnapshot
@@ -14,6 +15,7 @@ struct MenuBarLabelView: View {
 
 struct MenuContentView: View {
     @ObservedObject var model: CountdownModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -29,7 +31,8 @@ struct MenuContentView: View {
             Divider()
 
             Button("Preferences…") {
-                model.openSettings()
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "settings")
             }
 
             Button("Quit") {
