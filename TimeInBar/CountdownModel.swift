@@ -99,6 +99,10 @@ final class CountdownModel: ObservableObject {
         didSet { persistAndRefresh() }
     }
 
+    @Published var quitsOneMinuteAfterWorkday: Bool {
+        didSet { persistAndRefresh() }
+    }
+
     @Published private(set) var launchAtLoginEnabled = false
     @Published private(set) var launchAtLoginRequiresApproval = false
     @Published private(set) var launchAtLoginUnsupported = false
@@ -107,11 +111,14 @@ final class CountdownModel: ObservableObject {
     @Published private(set) var snapshot: StatusSnapshot
 
     private let defaults: UserDefaults
+    private let launchedAt: Date
     private var timer: Timer?
+    private var autoQuitTimer: Timer?
     private var wakeObserver: NSObjectProtocol?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        self.launchedAt = .now
         self.startHour = defaults.object(forKey: Keys.startHour) as? Int ?? 8
         self.startMinute = defaults.object(forKey: Keys.startMinute) as? Int ?? 0
         self.endHour = defaults.object(forKey: Keys.endHour) as? Int ?? 17
@@ -122,6 +129,7 @@ final class CountdownModel: ObservableObject {
         self.progressDisplayStyle = ProgressDisplayStyle(rawValue: storedProgressStyle ?? "") ?? .percentageText
         self.showsRemainingTime = defaults.object(forKey: Keys.showsRemainingTime) as? Bool ?? true
         self.showsProgress = defaults.object(forKey: Keys.showsProgress) as? Bool ?? true
+        self.quitsOneMinuteAfterWorkday = defaults.object(forKey: Keys.quitsOneMinuteAfterWorkday) as? Bool ?? false
         self.snapshot = StatusSnapshot(
             status: .notStarted,
             labelText: nil,
@@ -140,6 +148,7 @@ final class CountdownModel: ObservableObject {
 
     deinit {
         timer?.invalidate()
+        autoQuitTimer?.invalidate()
         if let wakeObserver {
             NotificationCenter.default.removeObserver(wakeObserver)
         }
@@ -218,8 +227,10 @@ final class CountdownModel: ObservableObject {
         defaults.set(progressDisplayStyle.rawValue, forKey: Keys.progressDisplayStyle)
         defaults.set(showsRemainingTime, forKey: Keys.showsRemainingTime)
         defaults.set(showsProgress, forKey: Keys.showsProgress)
+        defaults.set(quitsOneMinuteAfterWorkday, forKey: Keys.quitsOneMinuteAfterWorkday)
         refreshSnapshot()
         startTimer()
+        scheduleAutoQuitIfNeeded()
     }
 
     private func observeWakeNotifications() {
@@ -231,6 +242,7 @@ final class CountdownModel: ObservableObject {
             Task { @MainActor in
                 self?.refreshSnapshot()
                 self?.startTimer()
+                self?.scheduleAutoQuitIfNeeded()
                 self?.refreshLaunchAtLoginStatus()
             }
         }
@@ -249,6 +261,36 @@ final class CountdownModel: ObservableObject {
 
     private func refreshSnapshot(now: Date = .now) {
         snapshot = makeSnapshot(now: now)
+        scheduleAutoQuitIfNeeded(reference: now)
+    }
+
+    private func scheduleAutoQuitIfNeeded(reference: Date = .now) {
+        autoQuitTimer?.invalidate()
+        autoQuitTimer = nil
+
+        guard quitsOneMinuteAfterWorkday,
+              let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
+              let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
+              start < end else {
+            return
+        }
+
+        let quitAt = end.addingTimeInterval(60)
+
+        if reference >= quitAt {
+            if launchedAt < quitAt {
+                quitApp()
+            }
+            return
+        }
+
+        let nextTimer = Timer(fireAt: quitAt, interval: 0, target: self, selector: #selector(handleAutoQuitTimer), userInfo: nil, repeats: false)
+        autoQuitTimer = nextTimer
+        RunLoop.main.add(nextTimer, forMode: .common)
+    }
+
+    @objc private func handleAutoQuitTimer() {
+        quitApp()
     }
 
     private func makeSnapshot(now: Date) -> StatusSnapshot {
@@ -380,5 +422,6 @@ final class CountdownModel: ObservableObject {
         static let progressDisplayStyle = "progressDisplayStyle"
         static let showsRemainingTime = "showsRemainingTime"
         static let showsProgress = "showsProgress"
+        static let quitsOneMinuteAfterWorkday = "quitsOneMinuteAfterWorkday"
     }
 }

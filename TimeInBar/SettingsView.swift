@@ -64,6 +64,8 @@ struct SettingsView: View {
                     Toggle("登录后自动启动", isOn: launchAtLoginBinding)
                         .disabled(model.launchAtLoginUnsupported)
 
+                    Toggle("下班 1 分钟后自动退出", isOn: $model.quitsOneMinuteAfterWorkday)
+
                     if model.launchAtLoginUnsupported {
                         Text("当前系统版本不支持应用内配置开机自动启动。")
                             .font(.caption)
