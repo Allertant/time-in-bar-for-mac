@@ -13,7 +13,7 @@ struct TimeInBarApp: App {
 
         Window("Preferences", id: "settings") {
             SettingsView(model: countdownModel)
-                .frame(minWidth: 420, minHeight: 220)
+                .frame(minWidth: 460, idealWidth: 500, minHeight: 300)
         }
     }
 }
