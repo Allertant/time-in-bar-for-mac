@@ -64,7 +64,7 @@ private enum StatusLabelImageFactory {
         ]
         let textSize = NSAttributedString(string: text, attributes: textAttributes).size()
         let pieSize = NSSize(width: 12, height: 12)
-        let spacing: CGFloat = 4
+        let spacing: CGFloat = text.isEmpty ? 0 : 4
         let canvasSize = NSSize(
             width: ceil(textSize.width + spacing + pieSize.width),
             height: ceil(max(textSize.height, pieSize.height))
@@ -78,7 +78,9 @@ private enum StatusLabelImageFactory {
             x: 0,
             y: floor((canvasSize.height - textSize.height) / 2)
         )
-        NSString(string: text).draw(at: textOrigin, withAttributes: textAttributes)
+        if !text.isEmpty {
+            NSString(string: text).draw(at: textOrigin, withAttributes: textAttributes)
+        }
 
         let pieOrigin = NSPoint(
             x: ceil(textSize.width + spacing),

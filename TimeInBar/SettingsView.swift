@@ -26,6 +26,8 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+
+                Toggle("显示剩余时间", isOn: $model.showsRemainingTime)
             }
 
             if model.snapshot.status == .invalid {

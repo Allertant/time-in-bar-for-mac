@@ -90,6 +90,10 @@ final class CountdownModel: ObservableObject {
         didSet { persistAndRefresh() }
     }
 
+    @Published var showsRemainingTime: Bool {
+        didSet { persistAndRefresh() }
+    }
+
     @Published private(set) var snapshot: StatusSnapshot
 
     private let defaults: UserDefaults
@@ -106,6 +110,7 @@ final class CountdownModel: ObservableObject {
         self.refreshFrequency = RefreshFrequency(rawValue: storedFrequency ?? "") ?? .minute
         let storedProgressStyle = defaults.string(forKey: Keys.progressDisplayStyle)
         self.progressDisplayStyle = ProgressDisplayStyle(rawValue: storedProgressStyle ?? "") ?? .percentageText
+        self.showsRemainingTime = defaults.object(forKey: Keys.showsRemainingTime) as? Bool ?? true
         self.snapshot = StatusSnapshot(
             status: .notStarted,
             labelText: nil,
@@ -139,6 +144,7 @@ final class CountdownModel: ObservableObject {
         defaults.set(endMinute, forKey: Keys.endMinute)
         defaults.set(refreshFrequency.rawValue, forKey: Keys.refreshFrequency)
         defaults.set(progressDisplayStyle.rawValue, forKey: Keys.progressDisplayStyle)
+        defaults.set(showsRemainingTime, forKey: Keys.showsRemainingTime)
         refreshSnapshot()
         startTimer()
     }
@@ -215,10 +221,18 @@ final class CountdownModel: ObservableObject {
         let elapsed = now.timeIntervalSince(start)
         let progress = max(0, min(100, Int((elapsed / total) * 100)))
         let timeText = formattedRemainingTime(seconds: remaining)
+        let labelText: String
+
+        switch progressDisplayStyle {
+        case .percentageText:
+            labelText = showsRemainingTime ? "\(timeText) · \(progress)%" : "\(progress)%"
+        case .pieChart:
+            labelText = showsRemainingTime ? timeText : ""
+        }
 
         return StatusSnapshot(
             status: .working,
-            labelText: progressDisplayStyle == .percentageText ? "\(timeText) · \(progress)%" : timeText,
+            labelText: labelText,
             progressPercent: progress,
             progressStyle: progressDisplayStyle,
             labelSymbol: "timer",
@@ -278,5 +292,6 @@ final class CountdownModel: ObservableObject {
         static let endMinute = "endMinute"
         static let refreshFrequency = "refreshFrequency"
         static let progressDisplayStyle = "progressDisplayStyle"
+        static let showsRemainingTime = "showsRemainingTime"
     }
 }
