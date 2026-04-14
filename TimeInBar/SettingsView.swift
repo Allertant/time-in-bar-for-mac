@@ -26,7 +26,7 @@ struct SettingsView: View {
 
             GroupBox {
                 VStack(alignment: .leading, spacing: 12) {
-                    LabeledContent("刷新频率") {
+                    LabeledContent("剩余时间") {
                         Picker("刷新频率", selection: $model.refreshFrequency) {
                             ForEach(RefreshFrequency.allCases) { frequency in
                                 Text(frequency.title).tag(frequency)
@@ -36,6 +36,8 @@ struct SettingsView: View {
                         .pickerStyle(.segmented)
                         .frame(width: 220)
                     }
+
+                    Toggle("显示剩余时间", isOn: $model.showsRemainingTime)
 
                     Divider()
 
@@ -50,7 +52,7 @@ struct SettingsView: View {
                         .frame(width: 220)
                     }
 
-                    Toggle("显示剩余时间", isOn: $model.showsRemainingTime)
+                    Toggle("显示进度", isOn: $model.showsProgress)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
