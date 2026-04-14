@@ -31,6 +31,22 @@ enum RefreshFrequency: String, CaseIterable, Identifiable {
     }
 }
 
+enum ProgressDisplayStyle: String, CaseIterable, Identifiable {
+    case percentageText
+    case pieChart
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .percentageText:
+            return "百分比"
+        case .pieChart:
+            return "饼图"
+        }
+    }
+}
+
 enum WorkStatus: Equatable {
     case notStarted
     case working
@@ -41,6 +57,8 @@ enum WorkStatus: Equatable {
 struct StatusSnapshot {
     let status: WorkStatus
     let labelText: String?
+    let progressPercent: Int?
+    let progressStyle: ProgressDisplayStyle?
     let labelSymbol: String
     let menuTitle: String
     let menuDetail: String?
@@ -68,6 +86,10 @@ final class CountdownModel: ObservableObject {
         didSet { persistAndRefresh() }
     }
 
+    @Published var progressDisplayStyle: ProgressDisplayStyle {
+        didSet { persistAndRefresh() }
+    }
+
     @Published private(set) var snapshot: StatusSnapshot
 
     private let defaults: UserDefaults
@@ -82,9 +104,13 @@ final class CountdownModel: ObservableObject {
         self.endMinute = defaults.object(forKey: Keys.endMinute) as? Int ?? 0
         let storedFrequency = defaults.string(forKey: Keys.refreshFrequency)
         self.refreshFrequency = RefreshFrequency(rawValue: storedFrequency ?? "") ?? .minute
+        let storedProgressStyle = defaults.string(forKey: Keys.progressDisplayStyle)
+        self.progressDisplayStyle = ProgressDisplayStyle(rawValue: storedProgressStyle ?? "") ?? .percentageText
         self.snapshot = StatusSnapshot(
             status: .notStarted,
             labelText: nil,
+            progressPercent: nil,
+            progressStyle: nil,
             labelSymbol: "sunrise",
             menuTitle: "还没有上班",
             menuDetail: nil
@@ -112,6 +138,7 @@ final class CountdownModel: ObservableObject {
         defaults.set(endHour, forKey: Keys.endHour)
         defaults.set(endMinute, forKey: Keys.endMinute)
         defaults.set(refreshFrequency.rawValue, forKey: Keys.refreshFrequency)
+        defaults.set(progressDisplayStyle.rawValue, forKey: Keys.progressDisplayStyle)
         refreshSnapshot()
         startTimer()
     }
@@ -151,6 +178,8 @@ final class CountdownModel: ObservableObject {
             return StatusSnapshot(
                 status: .invalid,
                 labelText: nil,
+                progressPercent: nil,
+                progressStyle: nil,
                 labelSymbol: "exclamationmark.triangle",
                 menuTitle: "时间设置无效",
                 menuDetail: "结束时间必须晚于开始时间"
@@ -161,6 +190,8 @@ final class CountdownModel: ObservableObject {
             return StatusSnapshot(
                 status: .notStarted,
                 labelText: nil,
+                progressPercent: nil,
+                progressStyle: nil,
                 labelSymbol: "sunrise",
                 menuTitle: "还没有上班",
                 menuDetail: "今天从 \(timeText(hour: startHour, minute: startMinute)) 开始"
@@ -171,6 +202,8 @@ final class CountdownModel: ObservableObject {
             return StatusSnapshot(
                 status: .finished,
                 labelText: nil,
+                progressPercent: nil,
+                progressStyle: nil,
                 labelSymbol: "figure.walk.departure",
                 menuTitle: "下班了!!",
                 menuDetail: "今天已经结束啦"
@@ -185,7 +218,9 @@ final class CountdownModel: ObservableObject {
 
         return StatusSnapshot(
             status: .working,
-            labelText: "\(timeText) · \(progress)%",
+            labelText: progressDisplayStyle == .percentageText ? "\(timeText) · \(progress)%" : timeText,
+            progressPercent: progress,
+            progressStyle: progressDisplayStyle,
             labelSymbol: "timer",
             menuTitle: "距离下班还剩 \(timeText)",
             menuDetail: "今日进度 \(progress)%"
@@ -242,5 +277,6 @@ final class CountdownModel: ObservableObject {
         static let endHour = "endHour"
         static let endMinute = "endMinute"
         static let refreshFrequency = "refreshFrequency"
+        static let progressDisplayStyle = "progressDisplayStyle"
     }
 }

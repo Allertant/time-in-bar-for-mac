@@ -19,6 +19,15 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
             }
 
+            Section("进度展示") {
+                Picker("进度展示", selection: $model.progressDisplayStyle) {
+                    ForEach(ProgressDisplayStyle.allCases) { style in
+                        Text(style.title).tag(style)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
             if model.snapshot.status == .invalid {
                 Text("结束时间必须晚于开始时间。")
                     .foregroundStyle(.red)
