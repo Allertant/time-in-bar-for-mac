@@ -1,0 +1,228 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000012026041400000001 /* TimeInBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000102026041400000001 /* TimeInBarApp.swift */; };
+		A10000022026041400000001 /* CountdownModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000112026041400000001 /* CountdownModel.swift */; };
+		A10000032026041400000001 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000122026041400000001 /* MenuContentView.swift */; };
+		A10000042026041400000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000132026041400000001 /* SettingsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A10000052026041400000001 /* TimeInBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeInBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000102026041400000001 /* TimeInBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeInBarApp.swift; sourceTree = "<group>"; };
+		A10000112026041400000001 /* CountdownModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownModel.swift; sourceTree = "<group>"; };
+		A10000122026041400000001 /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
+		A10000132026041400000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A10000142026041400000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10000062026041400000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10000072026041400000001 = {
+			isa = PBXGroup;
+			children = (
+				A10000092026041400000001 /* TimeInBar */,
+				A10000082026041400000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A10000082026041400000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000052026041400000001 /* TimeInBar.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A10000092026041400000001 /* TimeInBar */ = {
+			isa = PBXGroup;
+			children = (
+				A10000102026041400000001 /* TimeInBarApp.swift */,
+				A10000112026041400000001 /* CountdownModel.swift */,
+				A10000122026041400000001 /* MenuContentView.swift */,
+				A10000132026041400000001 /* SettingsView.swift */,
+				A10000142026041400000001 /* Info.plist */,
+			);
+			path = TimeInBar;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A100000A2026041400000001 /* TimeInBar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A100000D2026041400000001 /* Build configuration list for PBXNativeTarget "TimeInBar" */;
+			buildPhases = (
+				A100000B2026041400000001 /* Sources */,
+				A10000062026041400000001 /* Frameworks */,
+				A100000C2026041400000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TimeInBar;
+			productName = TimeInBar;
+			productReference = A10000052026041400000001 /* TimeInBar.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A100000E2026041400000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A100000A2026041400000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A100000F2026041400000001 /* Build configuration list for PBXProject "TimeInBar" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A10000072026041400000001;
+			productRefGroup = A10000082026041400000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A100000A2026041400000001 /* TimeInBar */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A100000C2026041400000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A100000B2026041400000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000012026041400000001 /* TimeInBarApp.swift in Sources */,
+				A10000022026041400000001 /* CountdownModel.swift in Sources */,
+				A10000032026041400000001 /* MenuContentView.swift in Sources */,
+				A10000042026041400000001 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A10000152026041400000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TimeInBar/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shiyixi.TimeInBar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A10000162026041400000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TimeInBar/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shiyixi.TimeInBar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A10000172026041400000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		A10000182026041400000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A100000D2026041400000001 /* Build configuration list for PBXNativeTarget "TimeInBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000152026041400000001 /* Debug */,
+				A10000162026041400000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A100000F2026041400000001 /* Build configuration list for PBXProject "TimeInBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000172026041400000001 /* Debug */,
+				A10000182026041400000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A100000E2026041400000001 /* Project object */;
+}
