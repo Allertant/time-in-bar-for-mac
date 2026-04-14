@@ -29,18 +29,7 @@ struct MenuContentView: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(model.snapshot.menuTitle)
-                .font(.headline)
-
-            if let detail = model.snapshot.menuDetail {
-                Text(detail)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Divider()
-
+        VStack(alignment: .leading, spacing: 6) {
             Button("Preferences…") {
                 NSApp.activate(ignoringOtherApps: true)
                 openWindow(id: "settings")
