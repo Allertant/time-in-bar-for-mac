@@ -56,6 +56,8 @@ struct MenuContentView: View {
 }
 
 private enum StatusLabelImageFactory {
+    private static let pieSize = NSSize(width: 14, height: 14)
+
     static func makeTimeAndPieImage(text: String, progress: Double) -> NSImage {
         let textFont = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
         let textAttributes: [NSAttributedString.Key: Any] = [
@@ -63,7 +65,6 @@ private enum StatusLabelImageFactory {
             .foregroundColor: NSColor.labelColor
         ]
         let textSize = NSAttributedString(string: text, attributes: textAttributes).size()
-        let pieSize = NSSize(width: 12, height: 12)
         let spacing: CGFloat = text.isEmpty ? 0 : 4
         let canvasSize = NSSize(
             width: ceil(textSize.width + spacing + pieSize.width),
@@ -94,9 +95,8 @@ private enum StatusLabelImageFactory {
     }
 
     private static func drawPie(progress: Double, in rect: NSRect) {
-        let size = NSSize(width: 12, height: 12)
         let clamped = min(max(progress, 0), 1)
-        let circleRect = NSRect(origin: rect.origin, size: size).insetBy(dx: 0.5, dy: 0.5)
+        let circleRect = NSRect(origin: rect.origin, size: pieSize).insetBy(dx: 0.5, dy: 0.5)
         let background = NSBezierPath(ovalIn: circleRect)
         NSColor.labelColor.withAlphaComponent(0.14).setFill()
         background.fill()
