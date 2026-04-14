@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import ServiceManagement
 
 enum RefreshFrequency: String, CaseIterable, Identifiable {
     case hour
@@ -98,6 +99,11 @@ final class CountdownModel: ObservableObject {
         didSet { persistAndRefresh() }
     }
 
+    @Published private(set) var launchAtLoginEnabled = false
+    @Published private(set) var launchAtLoginRequiresApproval = false
+    @Published private(set) var launchAtLoginUnsupported = false
+    @Published private(set) var launchAtLoginErrorMessage: String?
+
     @Published private(set) var snapshot: StatusSnapshot
 
     private let defaults: UserDefaults
@@ -129,6 +135,7 @@ final class CountdownModel: ObservableObject {
         refreshSnapshot()
         startTimer()
         observeWakeNotifications()
+        refreshLaunchAtLoginStatus()
     }
 
     deinit {
@@ -140,6 +147,66 @@ final class CountdownModel: ObservableObject {
 
     func quitApp() {
         NSApp.terminate(nil)
+    }
+
+    func refreshLaunchAtLoginStatus() {
+        launchAtLoginErrorMessage = nil
+
+        guard #available(macOS 13.0, *) else {
+            launchAtLoginUnsupported = true
+            launchAtLoginEnabled = false
+            launchAtLoginRequiresApproval = false
+            return
+        }
+
+        launchAtLoginUnsupported = false
+
+        let status = SMAppService.mainApp.status
+        switch status {
+        case .enabled:
+            launchAtLoginEnabled = true
+            launchAtLoginRequiresApproval = false
+        case .requiresApproval:
+            launchAtLoginEnabled = true
+            launchAtLoginRequiresApproval = true
+        case .notRegistered:
+            launchAtLoginEnabled = false
+            launchAtLoginRequiresApproval = false
+        case .notFound:
+            launchAtLoginEnabled = false
+            launchAtLoginRequiresApproval = false
+            launchAtLoginErrorMessage = "系统未找到可注册的启动项。"
+        @unknown default:
+            launchAtLoginEnabled = false
+            launchAtLoginRequiresApproval = false
+            launchAtLoginErrorMessage = "无法确认开机启动状态。"
+        }
+    }
+
+    func setLaunchAtLoginEnabled(_ isEnabled: Bool) {
+        guard #available(macOS 13.0, *) else {
+            launchAtLoginUnsupported = true
+            return
+        }
+
+        launchAtLoginErrorMessage = nil
+
+        do {
+            if isEnabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            launchAtLoginErrorMessage = error.localizedDescription
+        }
+
+        refreshLaunchAtLoginStatus()
+    }
+
+    func openLoginItemsSettings() {
+        guard #available(macOS 13.0, *) else { return }
+        SMAppService.openSystemSettingsLoginItems()
     }
 
     private func persistAndRefresh() {
@@ -164,6 +231,7 @@ final class CountdownModel: ObservableObject {
             Task { @MainActor in
                 self?.refreshSnapshot()
                 self?.startTimer()
+                self?.refreshLaunchAtLoginStatus()
             }
         }
     }

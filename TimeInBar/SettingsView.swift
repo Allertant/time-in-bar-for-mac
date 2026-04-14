@@ -59,6 +59,36 @@ struct SettingsView: View {
                 SectionLabel(title: "显示方式", subtitle: "控制状态栏中的刷新节奏和进度样式")
             }
 
+            GroupBox {
+                VStack(alignment: .leading, spacing: 10) {
+                    Toggle("登录后自动启动", isOn: launchAtLoginBinding)
+                        .disabled(model.launchAtLoginUnsupported)
+
+                    if model.launchAtLoginUnsupported {
+                        Text("当前系统版本不支持应用内配置开机自动启动。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if model.launchAtLoginRequiresApproval {
+                        Text("系统还需要你的确认，启用后请在系统设置的登录项中完成授权。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Button("打开登录项设置") {
+                            model.openLoginItemsSettings()
+                        }
+                    }
+
+                    if let errorMessage = model.launchAtLoginErrorMessage {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } label: {
+                SectionLabel(title: "启动", subtitle: "控制应用是否在登录后自动启动")
+            }
+
             if model.snapshot.status == .invalid {
                 Label("结束时间必须晚于开始时间。", systemImage: "exclamationmark.triangle.fill")
                     .font(.subheadline)
@@ -72,6 +102,9 @@ struct SettingsView: View {
         .padding(18)
         .frame(width: 500)
         .background(Color(NSColor.windowBackgroundColor))
+        .onAppear {
+            model.refreshLaunchAtLoginStatus()
+        }
     }
 
     private var scheduleSummary: String {
@@ -86,6 +119,13 @@ struct SettingsView: View {
                 model.startHour = components.hour ?? model.startHour
                 model.startMinute = components.minute ?? model.startMinute
             }
+        )
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { model.launchAtLoginEnabled },
+            set: { model.setLaunchAtLoginEnabled($0) }
         )
     }
 
