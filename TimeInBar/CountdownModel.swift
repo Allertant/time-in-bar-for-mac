@@ -248,20 +248,70 @@ final class CountdownModel: ObservableObject {
         }
     }
 
-    private func startTimer() {
+    private func startTimer(reference: Date = .now) {
         timer?.invalidate()
-        let nextTimer = Timer(timeInterval: refreshFrequency.interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshSnapshot()
-            }
-        }
+        guard let nextFireDate = nextRefreshDate(after: reference) else { return }
+
+        let nextTimer = Timer(
+            fireAt: nextFireDate,
+            interval: 0,
+            target: self,
+            selector: #selector(handleRefreshTimer),
+            userInfo: nil,
+            repeats: false
+        )
         timer = nextTimer
         RunLoop.main.add(nextTimer, forMode: .common)
+    }
+
+    @objc private func handleRefreshTimer() {
+        let now = Date()
+        refreshSnapshot(now: now)
+        startTimer(reference: now)
     }
 
     private func refreshSnapshot(now: Date = .now) {
         snapshot = makeSnapshot(now: now)
         scheduleAutoQuitIfNeeded(reference: now)
+    }
+
+    private func nextRefreshDate(after reference: Date) -> Date? {
+        let candidates = [
+            nextDisplayRefreshDate(after: reference),
+            nextStateTransitionDate(after: reference)
+        ].compactMap { $0 }
+
+        return candidates.min()
+    }
+
+    private func nextDisplayRefreshDate(after reference: Date) -> Date? {
+        let component: Calendar.Component
+
+        switch refreshFrequency {
+        case .second:
+            component = .second
+        case .minute:
+            component = .minute
+        case .hour:
+            component = .hour
+        }
+
+        return Calendar.current.dateInterval(of: component, for: reference)?.end
+    }
+
+    private func nextStateTransitionDate(after reference: Date) -> Date? {
+        guard let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
+              let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
+              start < end else {
+            return nil
+        }
+
+        let candidates = [
+            start,
+            end
+        ].filter { $0 > reference }
+
+        return candidates.min()
     }
 
     private func scheduleAutoQuitIfNeeded(reference: Date = .now) {
