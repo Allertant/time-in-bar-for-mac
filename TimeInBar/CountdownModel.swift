@@ -426,7 +426,7 @@ final class CountdownModel: ObservableObject {
         case .hour:
             rounded = Int(seconds.rounded(.down))
             let hours = max(0, rounded / 3600)
-            return "\(hours)h"
+            return hours > 0 ? "\(hours)h" : "<1h"
         case .minute:
             rounded = Int(seconds.rounded(.down))
             let totalMinutes = max(0, rounded / 60)
@@ -435,7 +435,7 @@ final class CountdownModel: ObservableObject {
             if hours > 0 {
                 return minutes > 0 ? "\(hours)h\(minutes)m" : "\(hours)h"
             }
-            return "\(minutes)m"
+            return minutes > 0 ? "\(minutes)m" : "<1m"
         case .second:
             rounded = max(0, Int(seconds.rounded(.down)))
             let hours = rounded / 3600
