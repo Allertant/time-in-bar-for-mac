@@ -48,7 +48,24 @@ enum ProgressDisplayStyle: String, CaseIterable, Identifiable {
     }
 }
 
+enum TrackingMode: String, CaseIterable, Identifiable {
+    case fixedSchedule
+    case countdown
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .fixedSchedule:
+            return "按时间段"
+        case .countdown:
+            return "按时长"
+        }
+    }
+}
+
 enum WorkStatus: Equatable {
+    case idle
     case notStarted
     case working
     case finished
@@ -61,12 +78,14 @@ struct StatusSnapshot {
     let progressPercent: Int?
     let progressStyle: ProgressDisplayStyle?
     let labelSymbol: String
-    let menuTitle: String
-    let menuDetail: String?
 }
 
 @MainActor
 final class CountdownModel: ObservableObject {
+    @Published var trackingMode: TrackingMode {
+        didSet { persistAndRefresh() }
+    }
+
     @Published var startHour: Int {
         didSet { persistAndRefresh() }
     }
@@ -80,6 +99,10 @@ final class CountdownModel: ObservableObject {
     }
 
     @Published var endMinute: Int {
+        didSet { persistAndRefresh() }
+    }
+
+    @Published var workDurationHours: Int {
         didSet { persistAndRefresh() }
     }
 
@@ -110,6 +133,26 @@ final class CountdownModel: ObservableObject {
 
     @Published private(set) var snapshot: StatusSnapshot
 
+    var todayManualStartTime: String? {
+        guard let start = manualStartDate,
+              Calendar.current.isDateInToday(start) else {
+            return nil
+        }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: start)
+    }
+
+    private var manualStartDate: Date? {
+        didSet {
+            if let date = manualStartDate {
+                defaults.set(date, forKey: Keys.manualStartDate)
+            } else {
+                defaults.removeObject(forKey: Keys.manualStartDate)
+            }
+        }
+    }
+
     private let defaults: UserDefaults
     private let launchedAt: Date
     private var timer: Timer?
@@ -119,10 +162,14 @@ final class CountdownModel: ObservableObject {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.launchedAt = .now
+        let storedMode = defaults.string(forKey: Keys.trackingMode)
+        self.trackingMode = TrackingMode(rawValue: storedMode ?? "") ?? .fixedSchedule
         self.startHour = defaults.object(forKey: Keys.startHour) as? Int ?? 8
         self.startMinute = defaults.object(forKey: Keys.startMinute) as? Int ?? 0
         self.endHour = defaults.object(forKey: Keys.endHour) as? Int ?? 17
         self.endMinute = defaults.object(forKey: Keys.endMinute) as? Int ?? 0
+        self.workDurationHours = defaults.object(forKey: Keys.workDurationHours) as? Int ?? 8
+        self.manualStartDate = defaults.object(forKey: Keys.manualStartDate) as? Date
         let storedFrequency = defaults.string(forKey: Keys.refreshFrequency)
         self.refreshFrequency = RefreshFrequency(rawValue: storedFrequency ?? "") ?? .minute
         let storedProgressStyle = defaults.string(forKey: Keys.progressDisplayStyle)
@@ -135,9 +182,7 @@ final class CountdownModel: ObservableObject {
             labelText: nil,
             progressPercent: nil,
             progressStyle: nil,
-            labelSymbol: "sunrise",
-            menuTitle: "还没有上班",
-            menuDetail: nil
+            labelSymbol: "sunrise"
         )
 
         refreshSnapshot()
@@ -218,11 +263,20 @@ final class CountdownModel: ObservableObject {
         SMAppService.openSystemSettingsLoginItems()
     }
 
+    func startManualWork() {
+        manualStartDate = .now
+        refreshSnapshot()
+        startTimer()
+        scheduleAutoQuitIfNeeded()
+    }
+
     private func persistAndRefresh() {
+        defaults.set(trackingMode.rawValue, forKey: Keys.trackingMode)
         defaults.set(startHour, forKey: Keys.startHour)
         defaults.set(startMinute, forKey: Keys.startMinute)
         defaults.set(endHour, forKey: Keys.endHour)
         defaults.set(endMinute, forKey: Keys.endMinute)
+        defaults.set(workDurationHours, forKey: Keys.workDurationHours)
         defaults.set(refreshFrequency.rawValue, forKey: Keys.refreshFrequency)
         defaults.set(progressDisplayStyle.rawValue, forKey: Keys.progressDisplayStyle)
         defaults.set(showsRemainingTime, forKey: Keys.showsRemainingTime)
@@ -300,31 +354,57 @@ final class CountdownModel: ObservableObject {
     }
 
     private func nextStateTransitionDate(after reference: Date) -> Date? {
-        guard let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
-              let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
-              start < end else {
-            return nil
+        switch trackingMode {
+        case .fixedSchedule:
+            guard let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
+                  let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
+                  start < end else {
+                return nil
+            }
+
+            let candidates = [
+                start,
+                end
+            ].filter { $0 > reference }
+
+            return candidates.min()
+
+        case .countdown:
+            guard let start = manualStartDate,
+                  Calendar.current.isDateInToday(start) else {
+                return nil
+            }
+            let end = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
+            return end > reference ? end : nil
         }
-
-        let candidates = [
-            start,
-            end
-        ].filter { $0 > reference }
-
-        return candidates.min()
     }
 
     private func scheduleAutoQuitIfNeeded(reference: Date = .now) {
         autoQuitTimer?.invalidate()
         autoQuitTimer = nil
 
-        guard quitsOneMinuteAfterWorkday,
-              let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
-              let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
-              start < end else {
-            return
+        guard quitsOneMinuteAfterWorkday else { return }
+
+        let endDate: Date?
+
+        switch trackingMode {
+        case .fixedSchedule:
+            guard let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
+                  let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
+                  start < end else {
+                return
+            }
+            endDate = end
+
+        case .countdown:
+            guard let start = manualStartDate,
+                  Calendar.current.isDateInToday(start) else {
+                return
+            }
+            endDate = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
         }
 
+        guard let end = endDate else { return }
         let quitAt = end.addingTimeInterval(60)
 
         if reference >= quitAt {
@@ -344,6 +424,15 @@ final class CountdownModel: ObservableObject {
     }
 
     private func makeSnapshot(now: Date) -> StatusSnapshot {
+        switch trackingMode {
+        case .fixedSchedule:
+            return makeFixedScheduleSnapshot(now: now)
+        case .countdown:
+            return makeCountdownSnapshot(now: now)
+        }
+    }
+
+    private func makeFixedScheduleSnapshot(now: Date) -> StatusSnapshot {
         guard let start = dateForToday(hour: startHour, minute: startMinute, reference: now),
               let end = dateForToday(hour: endHour, minute: endMinute, reference: now),
               start < end else {
@@ -352,9 +441,7 @@ final class CountdownModel: ObservableObject {
                 labelText: nil,
                 progressPercent: nil,
                 progressStyle: nil,
-                labelSymbol: "exclamationmark.triangle",
-                menuTitle: "时间设置无效",
-                menuDetail: "结束时间必须晚于开始时间"
+                labelSymbol: "exclamationmark.triangle"
             )
         }
 
@@ -364,9 +451,7 @@ final class CountdownModel: ObservableObject {
                 labelText: nil,
                 progressPercent: nil,
                 progressStyle: nil,
-                labelSymbol: "sunrise",
-                menuTitle: "还没有上班",
-                menuDetail: "今天从 \(timeText(hour: startHour, minute: startMinute)) 开始"
+                labelSymbol: "sunrise"
             )
         }
 
@@ -376,12 +461,41 @@ final class CountdownModel: ObservableObject {
                 labelText: nil,
                 progressPercent: nil,
                 progressStyle: nil,
-                labelSymbol: "figure.walk.departure",
-                menuTitle: "下班了!!",
-                menuDetail: "今天已经结束啦"
+                labelSymbol: "figure.walk.departure"
             )
         }
 
+        return makeWorkingSnapshot(start: start, end: end, now: now)
+    }
+
+    private func makeCountdownSnapshot(now: Date) -> StatusSnapshot {
+        guard let start = manualStartDate,
+              Calendar.current.isDateInToday(start) else {
+            return StatusSnapshot(
+                status: .idle,
+                labelText: nil,
+                progressPercent: nil,
+                progressStyle: nil,
+                labelSymbol: "sunrise"
+            )
+        }
+
+        let end = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
+
+        if now >= end {
+            return StatusSnapshot(
+                status: .finished,
+                labelText: nil,
+                progressPercent: nil,
+                progressStyle: nil,
+                labelSymbol: "figure.walk.departure"
+            )
+        }
+
+        return makeWorkingSnapshot(start: start, end: end, now: now)
+    }
+
+    private func makeWorkingSnapshot(start: Date, end: Date, now: Date) -> StatusSnapshot {
         let total = end.timeIntervalSince(start)
         let remaining = end.timeIntervalSince(now)
         let elapsed = now.timeIntervalSince(start)
@@ -413,9 +527,7 @@ final class CountdownModel: ObservableObject {
             labelText: labelText,
             progressPercent: progressPercent,
             progressStyle: progressStyle,
-            labelSymbol: "timer",
-            menuTitle: "距离下班还剩 \(timeText)",
-            menuDetail: "今日进度 \(progress)%"
+            labelSymbol: "timer"
         )
     }
 
@@ -451,10 +563,6 @@ final class CountdownModel: ObservableObject {
         }
     }
 
-    private func timeText(hour: Int, minute: Int) -> String {
-        String(format: "%02d:%02d", hour, minute)
-    }
-
     private func dateForToday(hour: Int, minute: Int, reference: Date) -> Date? {
         var components = Calendar.current.dateComponents([.year, .month, .day], from: reference)
         components.hour = hour
@@ -464,10 +572,13 @@ final class CountdownModel: ObservableObject {
     }
 
     private enum Keys {
+        static let trackingMode = "trackingMode"
         static let startHour = "startHour"
         static let startMinute = "startMinute"
         static let endHour = "endHour"
         static let endMinute = "endMinute"
+        static let workDurationHours = "workDurationHours"
+        static let manualStartDate = "manualStartDate"
         static let refreshFrequency = "refreshFrequency"
         static let progressDisplayStyle = "progressDisplayStyle"
         static let showsRemainingTime = "showsRemainingTime"

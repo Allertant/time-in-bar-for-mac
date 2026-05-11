@@ -9,19 +9,46 @@ struct SettingsView: View {
                 Text("Preferences")
                     .font(.title3.weight(.semibold))
 
-                Text(scheduleSummary)
+                Text(modeSummary)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
             GroupBox {
-                HStack(alignment: .top, spacing: 18) {
-                    CompactTimePicker(title: "开始时间", selection: startTimeBinding)
-                    CompactTimePicker(title: "结束时间", selection: endTimeBinding)
+                VStack(alignment: .leading, spacing: 12) {
+                    Picker("打卡模式", selection: $model.trackingMode) {
+                        ForEach(TrackingMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+
+                    if model.trackingMode == .fixedSchedule {
+                        HStack(alignment: .top, spacing: 18) {
+                            CompactTimePicker(title: "开始时间", selection: startTimeBinding)
+                            CompactTimePicker(title: "结束时间", selection: endTimeBinding)
+                        }
+                    } else {
+                        LabeledContent("工作时长") {
+                            HStack(spacing: 4) {
+                                TextField("", value: $model.workDurationHours, format: .number)
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 50)
+                                    .multilineTextAlignment(.trailing)
+                                Text("小时")
+                                if let startTime = model.todayManualStartTime {
+                                    Text("·")
+                                    Text("上班时间 \(startTime)")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
-                SectionLabel(title: "时间段", subtitle: "设置每天的工作开始和结束时间")
+                SectionLabel(title: "工作时间", subtitle: model.trackingMode == .fixedSchedule ? "设置每天的工作开始和结束时间" : "设置每天的工作时长，手动开始计时")
             }
 
             GroupBox {
@@ -91,8 +118,17 @@ struct SettingsView: View {
                 SectionLabel(title: "启动", subtitle: "控制应用是否在登录后自动启动")
             }
 
-            if model.snapshot.status == .invalid {
+            if model.trackingMode == .fixedSchedule && model.snapshot.status == .invalid {
                 Label("结束时间必须晚于开始时间。", systemImage: "exclamationmark.triangle.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+            }
+
+            if model.trackingMode == .countdown && model.workDurationHours <= 0 {
+                Label("工作时长必须大于 0。", systemImage: "exclamationmark.triangle.fill")
                     .font(.subheadline)
                     .foregroundStyle(.red)
                     .padding(.horizontal, 12)
@@ -109,8 +145,13 @@ struct SettingsView: View {
         }
     }
 
-    private var scheduleSummary: String {
-        "\(timeText(hour: model.startHour, minute: model.startMinute)) - \(timeText(hour: model.endHour, minute: model.endMinute))"
+    private var modeSummary: String {
+        switch model.trackingMode {
+        case .fixedSchedule:
+            return "\(timeText(hour: model.startHour, minute: model.startMinute)) - \(timeText(hour: model.endHour, minute: model.endMinute))"
+        case .countdown:
+            return "每天工作 \(model.workDurationHours) 小时，手动打卡"
+        }
     }
 
     private var startTimeBinding: Binding<Date> {
