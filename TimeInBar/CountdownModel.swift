@@ -126,12 +126,18 @@ final class CountdownModel: ObservableObject {
         didSet { persistAndRefresh() }
     }
 
+    @Published var managesStretchly: Bool {
+        didSet { persistAndRefresh() }
+    }
+
     @Published private(set) var launchAtLoginEnabled = false
     @Published private(set) var launchAtLoginRequiresApproval = false
     @Published private(set) var launchAtLoginUnsupported = false
     @Published private(set) var launchAtLoginErrorMessage: String?
 
-    @Published private(set) var snapshot: StatusSnapshot
+    @Published private(set) var snapshot: StatusSnapshot {
+        didSet { manageStretchlyIfNeeded(from: oldValue.status, to: snapshot.status) }
+    }
 
     var todayManualStartTime: String? {
         guard let start = manualStartDate,
@@ -177,6 +183,7 @@ final class CountdownModel: ObservableObject {
         self.showsRemainingTime = defaults.object(forKey: Keys.showsRemainingTime) as? Bool ?? true
         self.showsProgress = defaults.object(forKey: Keys.showsProgress) as? Bool ?? true
         self.quitsOneMinuteAfterWorkday = defaults.object(forKey: Keys.quitsOneMinuteAfterWorkday) as? Bool ?? false
+        self.managesStretchly = defaults.object(forKey: Keys.managesStretchly) as? Bool ?? false
         self.snapshot = StatusSnapshot(
             status: .notStarted,
             labelText: nil,
@@ -264,10 +271,12 @@ final class CountdownModel: ObservableObject {
     }
 
     func startManualWork() {
+        let previousStatus = snapshot.status
         manualStartDate = .now
         refreshSnapshot()
         startTimer()
         scheduleAutoQuitIfNeeded()
+        manageStretchlyIfNeeded(from: previousStatus, to: snapshot.status)
     }
 
     private func persistAndRefresh() {
@@ -282,6 +291,7 @@ final class CountdownModel: ObservableObject {
         defaults.set(showsRemainingTime, forKey: Keys.showsRemainingTime)
         defaults.set(showsProgress, forKey: Keys.showsProgress)
         defaults.set(quitsOneMinuteAfterWorkday, forKey: Keys.quitsOneMinuteAfterWorkday)
+        defaults.set(managesStretchly, forKey: Keys.managesStretchly)
         refreshSnapshot()
         startTimer()
         scheduleAutoQuitIfNeeded()
@@ -421,6 +431,41 @@ final class CountdownModel: ObservableObject {
 
     @objc private func handleAutoQuitTimer() {
         quitApp()
+    }
+
+    // MARK: - Stretchly
+
+    private static let stretchlyBundleID = "net.hovancik.stretchly"
+
+    private func manageStretchlyIfNeeded(from oldStatus: WorkStatus, to newStatus: WorkStatus) {
+        guard managesStretchly else { return }
+
+        let wasWorking = oldStatus == .working
+        let isWorking = newStatus == .working
+
+        if !wasWorking && isWorking {
+            launchStretchly()
+        } else if wasWorking && !isWorking {
+            quitStretchly()
+        }
+    }
+
+    private func launchStretchly() {
+        let bundleID = Self.stretchlyBundleID
+        let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+        guard running.isEmpty else { return }
+
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            return
+        }
+        NSWorkspace.shared.open(url)
+    }
+
+    private func quitStretchly() {
+        let running = NSRunningApplication.runningApplications(withBundleIdentifier: Self.stretchlyBundleID)
+        for app in running {
+            app.terminate()
+        }
     }
 
     private func makeSnapshot(now: Date) -> StatusSnapshot {
@@ -584,5 +629,6 @@ final class CountdownModel: ObservableObject {
         static let showsRemainingTime = "showsRemainingTime"
         static let showsProgress = "showsProgress"
         static let quitsOneMinuteAfterWorkday = "quitsOneMinuteAfterWorkday"
+        static let managesStretchly = "managesStretchly"
     }
 }

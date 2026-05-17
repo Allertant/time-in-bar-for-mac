@@ -93,6 +93,8 @@ struct SettingsView: View {
 
                     Toggle("下班 1 分钟后自动退出", isOn: $model.quitsOneMinuteAfterWorkday)
 
+                    Toggle("上班时自动启动 Stretchly", isOn: $model.managesStretchly)
+
                     if model.launchAtLoginUnsupported {
                         Text("当前系统版本不支持应用内配置开机自动启动。")
                             .font(.caption)
