@@ -11,6 +11,7 @@
 		A10000022026041400000001 /* CountdownModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000112026041400000001 /* CountdownModel.swift */; };
 		A10000032026041400000001 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000122026041400000001 /* MenuContentView.swift */; };
 		A10000042026041400000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000132026041400000001 /* SettingsView.swift */; };
+		A10000192026051800000001 /* WorkdayReminderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001A2026051800000001 /* WorkdayReminderController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		A10000122026041400000001 /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
 		A10000132026041400000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A10000142026041400000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A100001A2026051800000001 /* WorkdayReminderController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkdayReminderController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +56,7 @@
 			children = (
 				A10000102026041400000001 /* TimeInBarApp.swift */,
 				A10000112026041400000001 /* CountdownModel.swift */,
+				A100001A2026051800000001 /* WorkdayReminderController.swift */,
 				A10000122026041400000001 /* MenuContentView.swift */,
 				A10000132026041400000001 /* SettingsView.swift */,
 				A10000142026041400000001 /* Info.plist */,
@@ -131,6 +134,7 @@
 			files = (
 				A10000012026041400000001 /* TimeInBarApp.swift in Sources */,
 				A10000022026041400000001 /* CountdownModel.swift in Sources */,
+				A10000192026051800000001 /* WorkdayReminderController.swift in Sources */,
 				A10000032026041400000001 /* MenuContentView.swift in Sources */,
 				A10000042026041400000001 /* SettingsView.swift in Sources */,
 			);

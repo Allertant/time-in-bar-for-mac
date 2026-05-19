@@ -120,6 +120,19 @@ struct SettingsView: View {
                 SectionLabel(title: "启动", subtitle: "控制应用是否在登录后自动启动")
             }
 
+            GroupBox {
+                HStack(spacing: 10) {
+                    Toggle("下班后全屏提示", isOn: $model.showsFullScreenReminderAfterWorkday)
+
+                    Button("测试全屏提示") {
+                        model.showFullScreenWorkdayReminderForTesting()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } label: {
+                SectionLabel(title: "下班提示", subtitle: "下班到点后用黑色全屏提示休息")
+            }
+
             if model.trackingMode == .fixedSchedule && model.snapshot.status == .invalid {
                 Label("结束时间必须晚于开始时间。", systemImage: "exclamationmark.triangle.fill")
                     .font(.subheadline)

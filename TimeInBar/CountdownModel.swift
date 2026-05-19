@@ -130,13 +130,20 @@ final class CountdownModel: ObservableObject {
         didSet { persistAndRefresh() }
     }
 
+    @Published var showsFullScreenReminderAfterWorkday: Bool {
+        didSet { persistAndRefresh() }
+    }
+
     @Published private(set) var launchAtLoginEnabled = false
     @Published private(set) var launchAtLoginRequiresApproval = false
     @Published private(set) var launchAtLoginUnsupported = false
     @Published private(set) var launchAtLoginErrorMessage: String?
 
     @Published private(set) var snapshot: StatusSnapshot {
-        didSet { manageStretchlyIfNeeded(from: oldValue.status, to: snapshot.status) }
+        didSet {
+            manageStretchlyIfNeeded(from: oldValue.status, to: snapshot.status)
+            updateWorkdayReminderVisibility()
+        }
     }
 
     var todayManualStartTime: String? {
@@ -163,7 +170,9 @@ final class CountdownModel: ObservableObject {
     private let launchedAt: Date
     private var timer: Timer?
     private var autoQuitTimer: Timer?
+    private var reminderQuitTimer: Timer?
     private var wakeObserver: NSObjectProtocol?
+    private let workdayReminderController = WorkdayReminderController()
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -184,6 +193,7 @@ final class CountdownModel: ObservableObject {
         self.showsProgress = defaults.object(forKey: Keys.showsProgress) as? Bool ?? true
         self.quitsOneMinuteAfterWorkday = defaults.object(forKey: Keys.quitsOneMinuteAfterWorkday) as? Bool ?? false
         self.managesStretchly = defaults.object(forKey: Keys.managesStretchly) as? Bool ?? false
+        self.showsFullScreenReminderAfterWorkday = defaults.object(forKey: Keys.showsFullScreenReminderAfterWorkday) as? Bool ?? false
         self.snapshot = StatusSnapshot(
             status: .notStarted,
             labelText: nil,
@@ -196,11 +206,13 @@ final class CountdownModel: ObservableObject {
         startTimer()
         observeWakeNotifications()
         refreshLaunchAtLoginStatus()
+        updateWorkdayReminderVisibility()
     }
 
     deinit {
         timer?.invalidate()
         autoQuitTimer?.invalidate()
+        reminderQuitTimer?.invalidate()
         if let wakeObserver {
             NotificationCenter.default.removeObserver(wakeObserver)
         }
@@ -292,9 +304,20 @@ final class CountdownModel: ObservableObject {
         defaults.set(showsProgress, forKey: Keys.showsProgress)
         defaults.set(quitsOneMinuteAfterWorkday, forKey: Keys.quitsOneMinuteAfterWorkday)
         defaults.set(managesStretchly, forKey: Keys.managesStretchly)
+        defaults.set(showsFullScreenReminderAfterWorkday, forKey: Keys.showsFullScreenReminderAfterWorkday)
         refreshSnapshot()
         startTimer()
         scheduleAutoQuitIfNeeded()
+    }
+
+    func showFullScreenWorkdayReminderForTesting() {
+        showWorkdayReminderThenQuit()
+    }
+
+    private func showWorkdayReminderThenQuit() {
+        workdayReminderController.show()
+        NSLog("TimeInBar reminder coverage: %@", workdayReminderController.coverageSummary)
+        scheduleReminderQuit()
     }
 
     private func observeWakeNotifications() {
@@ -393,7 +416,10 @@ final class CountdownModel: ObservableObject {
         autoQuitTimer?.invalidate()
         autoQuitTimer = nil
 
-        guard quitsOneMinuteAfterWorkday else { return }
+        guard quitsOneMinuteAfterWorkday,
+              !showsFullScreenReminderAfterWorkday else {
+            return
+        }
 
         let endDate: Date?
 
@@ -430,6 +456,36 @@ final class CountdownModel: ObservableObject {
     }
 
     @objc private func handleAutoQuitTimer() {
+        quitApp()
+    }
+
+    private func updateWorkdayReminderVisibility() {
+        if showsFullScreenReminderAfterWorkday && snapshot.status == .finished {
+            showWorkdayReminderThenQuit()
+        } else {
+            reminderQuitTimer?.invalidate()
+            reminderQuitTimer = nil
+            workdayReminderController.hide()
+        }
+    }
+
+    private func scheduleReminderQuit() {
+        guard reminderQuitTimer == nil else { return }
+
+        reminderQuitTimer?.invalidate()
+        let nextTimer = Timer(
+            fireAt: Date().addingTimeInterval(3),
+            interval: 0,
+            target: self,
+            selector: #selector(handleReminderQuitTimer),
+            userInfo: nil,
+            repeats: false
+        )
+        reminderQuitTimer = nextTimer
+        RunLoop.main.add(nextTimer, forMode: .common)
+    }
+
+    @objc private func handleReminderQuitTimer() {
         quitApp()
     }
 
@@ -630,5 +686,6 @@ final class CountdownModel: ObservableObject {
         static let showsProgress = "showsProgress"
         static let quitsOneMinuteAfterWorkday = "quitsOneMinuteAfterWorkday"
         static let managesStretchly = "managesStretchly"
+        static let showsFullScreenReminderAfterWorkday = "showsFullScreenReminderAfterWorkday"
     }
 }
