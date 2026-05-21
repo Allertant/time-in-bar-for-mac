@@ -32,7 +32,7 @@ struct SettingsView: View {
                     } else {
                         LabeledContent("工作时长") {
                             HStack(spacing: 4) {
-                                TextField("", value: $model.workDurationHours, format: .number)
+                                TextField("", value: $model.workDurationHours, format: .number.precision(.fractionLength(0...1)))
                                     .textFieldStyle(.roundedBorder)
                                     .frame(width: 50)
                                     .multilineTextAlignment(.trailing)
@@ -165,7 +165,7 @@ struct SettingsView: View {
         case .fixedSchedule:
             return "\(timeText(hour: model.startHour, minute: model.startMinute)) - \(timeText(hour: model.endHour, minute: model.endMinute))"
         case .countdown:
-            return "每天工作 \(model.workDurationHours) 小时，手动打卡"
+            return "每天工作 \(formatDuration(model.workDurationHours)) 小时，手动打卡"
         }
     }
 
@@ -206,6 +206,10 @@ struct SettingsView: View {
 
     private func timeText(hour: Int, minute: Int) -> String {
         String(format: "%02d:%02d", hour, minute)
+    }
+
+    private func formatDuration(_ hours: Double) -> String {
+        hours.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(hours))" : String(format: "%.1f", hours)
     }
 }
 

@@ -102,8 +102,11 @@ final class CountdownModel: ObservableObject {
         didSet { persistAndRefresh() }
     }
 
-    @Published var workDurationHours: Int {
-        didSet { persistAndRefresh() }
+    @Published var workDurationHours: Double {
+        didSet {
+            workDurationHours = (workDurationHours * 2).rounded() / 2
+            persistAndRefresh()
+        }
     }
 
     @Published var refreshFrequency: RefreshFrequency {
@@ -183,7 +186,11 @@ final class CountdownModel: ObservableObject {
         self.startMinute = defaults.object(forKey: Keys.startMinute) as? Int ?? 0
         self.endHour = defaults.object(forKey: Keys.endHour) as? Int ?? 17
         self.endMinute = defaults.object(forKey: Keys.endMinute) as? Int ?? 0
-        self.workDurationHours = defaults.object(forKey: Keys.workDurationHours) as? Int ?? 8
+        if defaults.object(forKey: Keys.workDurationHours) != nil {
+            self.workDurationHours = defaults.double(forKey: Keys.workDurationHours)
+        } else {
+            self.workDurationHours = 8
+        }
         self.manualStartDate = defaults.object(forKey: Keys.manualStartDate) as? Date
         let storedFrequency = defaults.string(forKey: Keys.refreshFrequency)
         self.refreshFrequency = RefreshFrequency(rawValue: storedFrequency ?? "") ?? .minute
