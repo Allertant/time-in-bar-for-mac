@@ -134,7 +134,7 @@ private struct WorkdayReminderView: View {
                 Color.black
                     .ignoresSafeArea()
 
-                Text("GAME OVER!")
+                Text("下班了，休息吧")
                     .font(.system(size: fontSize(for: proxy.size), weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)

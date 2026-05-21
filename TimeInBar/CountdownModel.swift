@@ -311,13 +311,13 @@ final class CountdownModel: ObservableObject {
     }
 
     func showFullScreenWorkdayReminderForTesting() {
-        showWorkdayReminderThenQuit()
+        showWorkdayReminder()
     }
 
-    private func showWorkdayReminderThenQuit() {
+    private func showWorkdayReminder() {
         workdayReminderController.show()
         NSLog("TimeInBar reminder coverage: %@", workdayReminderController.coverageSummary)
-        scheduleReminderQuit()
+        scheduleReminderDismiss()
     }
 
     private func observeWakeNotifications() {
@@ -416,8 +416,7 @@ final class CountdownModel: ObservableObject {
         autoQuitTimer?.invalidate()
         autoQuitTimer = nil
 
-        guard quitsOneMinuteAfterWorkday,
-              !showsFullScreenReminderAfterWorkday else {
+        guard quitsOneMinuteAfterWorkday else {
             return
         }
 
@@ -461,7 +460,7 @@ final class CountdownModel: ObservableObject {
 
     private func updateWorkdayReminderVisibility() {
         if showsFullScreenReminderAfterWorkday && snapshot.status == .finished {
-            showWorkdayReminderThenQuit()
+            showWorkdayReminder()
         } else {
             reminderQuitTimer?.invalidate()
             reminderQuitTimer = nil
@@ -469,15 +468,15 @@ final class CountdownModel: ObservableObject {
         }
     }
 
-    private func scheduleReminderQuit() {
+    private func scheduleReminderDismiss() {
         guard reminderQuitTimer == nil else { return }
 
         reminderQuitTimer?.invalidate()
         let nextTimer = Timer(
-            fireAt: Date().addingTimeInterval(3),
+            fireAt: Date().addingTimeInterval(5),
             interval: 0,
             target: self,
-            selector: #selector(handleReminderQuitTimer),
+            selector: #selector(handleReminderDismissTimer),
             userInfo: nil,
             repeats: false
         )
@@ -485,8 +484,8 @@ final class CountdownModel: ObservableObject {
         RunLoop.main.add(nextTimer, forMode: .common)
     }
 
-    @objc private func handleReminderQuitTimer() {
-        quitApp()
+    @objc private func handleReminderDismissTimer() {
+        workdayReminderController.hide()
     }
 
     // MARK: - Stretchly
