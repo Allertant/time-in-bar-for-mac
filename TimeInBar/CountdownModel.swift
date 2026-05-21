@@ -104,7 +104,11 @@ final class CountdownModel: ObservableObject {
 
     @Published var workDurationHours: Double {
         didSet {
-            workDurationHours = (workDurationHours * 2).rounded() / 2
+            let normalized = (workDurationHours * 2).rounded() / 2
+            if workDurationHours != normalized {
+                workDurationHours = normalized
+                return
+            }
             persistAndRefresh()
         }
     }
