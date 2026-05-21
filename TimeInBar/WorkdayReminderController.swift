@@ -96,6 +96,9 @@ final class WorkdayReminderController {
             ]
             window.hidesOnDeactivate = false
             window.isReleasedWhenClosed = false
+            window.onDismiss = { [weak self] in
+                self?.hide()
+            }
             window.contentView = NSHostingView(rootView: WorkdayReminderView())
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
@@ -115,15 +118,23 @@ final class WorkdayReminderController {
 }
 
 private final class WorkdayReminderWindow: NSWindow {
+    var onDismiss: (() -> Void)?
+
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 
-    override func close() {
-        // This reminder is intentionally not user-closable.
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 53 {
+            onDismiss?()
+        } else {
+            super.keyDown(with: event)
+        }
     }
 
+    override func close() {}
+
     override func performClose(_ sender: Any?) {
-        // This reminder is intentionally not user-closable.
+        onDismiss?()
     }
 }
 
@@ -139,6 +150,11 @@ private struct WorkdayReminderView: View {
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
                     .padding(48)
+
+                Text("按 ESC 关闭")
+                    .font(.system(size: min(fontSize(for: proxy.size) * 0.25, 18)))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.top, 16)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }

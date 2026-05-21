@@ -145,7 +145,7 @@ final class CountdownModel: ObservableObject {
     @Published private(set) var snapshot: StatusSnapshot {
         didSet {
             manageStretchlyIfNeeded(from: oldValue.status, to: snapshot.status)
-            updateWorkdayReminderVisibility()
+            updateWorkdayReminderVisibility(oldStatus: oldValue.status)
         }
     }
 
@@ -213,7 +213,6 @@ final class CountdownModel: ObservableObject {
         startTimer()
         observeWakeNotifications()
         refreshLaunchAtLoginStatus()
-        updateWorkdayReminderVisibility()
     }
 
     deinit {
@@ -465,8 +464,11 @@ final class CountdownModel: ObservableObject {
         quitApp()
     }
 
-    private func updateWorkdayReminderVisibility() {
-        if showsFullScreenReminderAfterWorkday && snapshot.status == .finished {
+    private func updateWorkdayReminderVisibility(oldStatus: WorkStatus) {
+        if showsFullScreenReminderAfterWorkday
+            && trackingMode == .countdown
+            && oldStatus == .working
+            && snapshot.status == .finished {
             showWorkdayReminder()
         } else {
             reminderQuitTimer?.invalidate()
@@ -480,7 +482,7 @@ final class CountdownModel: ObservableObject {
 
         reminderQuitTimer?.invalidate()
         let nextTimer = Timer(
-            fireAt: Date().addingTimeInterval(5),
+            fireAt: Date().addingTimeInterval(3),
             interval: 0,
             target: self,
             selector: #selector(handleReminderDismissTimer),
