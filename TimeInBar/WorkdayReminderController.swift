@@ -151,10 +151,14 @@ private struct WorkdayReminderView: View {
                     .multilineTextAlignment(.center)
                     .padding(48)
 
-                Text("按 ESC 关闭")
-                    .font(.system(size: min(fontSize(for: proxy.size) * 0.25, 18)))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .padding(.top, 16)
+                VStack {
+                    Spacer()
+
+                    Text("按 ESC 关闭")
+                        .font(.system(size: min(fontSize(for: proxy.size) * 0.25, 18)))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .padding(.bottom, max(proxy.safeAreaInsets.bottom + 32, 48))
+                }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }

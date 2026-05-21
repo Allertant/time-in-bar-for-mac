@@ -124,9 +124,11 @@ struct SettingsView: View {
                 HStack(spacing: 10) {
                     Toggle("下班后全屏提示", isOn: $model.showsFullScreenReminderAfterWorkday)
 
+                    /*
                     Button("测试全屏提示") {
                         model.showFullScreenWorkdayReminderForTesting()
                     }
+                    */
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
