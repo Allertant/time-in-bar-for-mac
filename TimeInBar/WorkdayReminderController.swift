@@ -5,40 +5,32 @@ import SwiftUI
 final class WorkdayReminderController {
     private var windows: [WorkdayReminderWindow] = []
     private var screenObserver: NSObjectProtocol?
+    private var dismissTimer: Timer?
 
     var isPresented: Bool {
         !windows.isEmpty
     }
 
-    var presentedWindowCount: Int {
-        windows.count
-    }
-
-    var targetScreenCount: Int {
-        targetScreens.count
-    }
-
-    var coverageSummary: String {
-        let screenFrames = targetScreens
-            .map { NSStringFromRect($0.frame) }
-            .joined(separator: ", ")
-        return "windows=\(presentedWindowCount), screens=\(targetScreenCount), frames=[\(screenFrames)]"
-    }
-
     deinit {
+        dismissTimer?.invalidate()
         if let screenObserver {
             NotificationCenter.default.removeObserver(screenObserver)
         }
     }
 
-    func show() {
-        guard windows.isEmpty else { return }
-
-        observeScreenChanges()
-        createWindows()
+    func presentThenDismiss(after seconds: TimeInterval) {
+        show()
+        dismissTimer?.invalidate()
+        dismissTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                self?.hide()
+            }
+        }
     }
 
     func hide() {
+        dismissTimer?.invalidate()
+        dismissTimer = nil
         for window in windows {
             window.orderOut(nil)
         }
@@ -48,6 +40,13 @@ final class WorkdayReminderController {
             NotificationCenter.default.removeObserver(screenObserver)
             self.screenObserver = nil
         }
+    }
+
+    private func show() {
+        guard windows.isEmpty else { return }
+
+        observeScreenChanges()
+        createWindows()
     }
 
     private func observeScreenChanges() {

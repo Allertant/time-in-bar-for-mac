@@ -17,6 +17,7 @@
 		A10000252026121700000001 /* StatusBarImageFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000242026121700000001 /* StatusBarImageFactory.swift */; };
 		A10000272026121700000002 /* StretchlyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000262026121700000002 /* StretchlyManager.swift */; };
 		A10000292026121700000003 /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000282026121700000003 /* LaunchAtLoginService.swift */; };
+		A10000312026121700000004 /* WorkScheduleCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000302026121700000004 /* WorkScheduleCalculator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		A10000242026121700000001 /* StatusBarImageFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarImageFactory.swift; sourceTree = "<group>"; };
 		A10000262026121700000002 /* StretchlyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StretchlyManager.swift; sourceTree = "<group>"; };
 		A10000282026121700000003 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
+		A10000302026121700000004 /* WorkScheduleCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkScheduleCalculator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +76,7 @@
 				A10000242026121700000001 /* StatusBarImageFactory.swift */,
 				A10000262026121700000002 /* StretchlyManager.swift */,
 				A10000282026121700000003 /* LaunchAtLoginService.swift */,
+				A10000302026121700000004 /* WorkScheduleCalculator.swift */,
 				A10000142026041400000001 /* Info.plist */,
 			);
 			path = TimeInBar;
@@ -157,6 +160,7 @@
 				A10000252026121700000001 /* StatusBarImageFactory.swift in Sources */,
 				A10000272026121700000002 /* StretchlyManager.swift in Sources */,
 				A10000292026121700000003 /* LaunchAtLoginService.swift in Sources */,
+				A10000312026121700000004 /* WorkScheduleCalculator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -132,7 +132,6 @@ final class CountdownModel: ObservableObject {
     private let launchedAt: Date
     private var timer: Timer?
     private var autoQuitTimer: Timer?
-    private var reminderDismissTimer: Timer?
     private var wakeObserver: NSObjectProtocol?
     private let workdayReminderController = WorkdayReminderController()
 
@@ -177,7 +176,6 @@ final class CountdownModel: ObservableObject {
     deinit {
         timer?.invalidate()
         autoQuitTimer?.invalidate()
-        reminderDismissTimer?.invalidate()
         if let wakeObserver {
             NotificationCenter.default.removeObserver(wakeObserver)
         }
@@ -202,13 +200,7 @@ final class CountdownModel: ObservableObject {
     }
 
     func showFullScreenWorkdayReminderForTesting() {
-        showWorkdayReminder()
-    }
-
-    private func showWorkdayReminder() {
-        workdayReminderController.show()
-        NSLog("TimeInBar reminder coverage: %@", workdayReminderController.coverageSummary)
-        scheduleReminderDismiss()
+        workdayReminderController.presentThenDismiss(after: 3)
     }
 
     private func observeWakeNotifications() {
@@ -280,8 +272,8 @@ final class CountdownModel: ObservableObject {
     private func nextStateTransitionDate(after reference: Date) -> Date? {
         switch trackingMode {
         case .fixedSchedule:
-            guard let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
-                  let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
+            guard let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
+                  let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
                   start < end else {
                 return nil
             }
@@ -315,8 +307,8 @@ final class CountdownModel: ObservableObject {
 
         switch trackingMode {
         case .fixedSchedule:
-            guard let end = dateForToday(hour: endHour, minute: endMinute, reference: reference),
-                  let start = dateForToday(hour: startHour, minute: startMinute, reference: reference),
+            guard let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
+                  let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
                   start < end else {
                 return
             }
@@ -354,32 +346,10 @@ final class CountdownModel: ObservableObject {
             && trackingMode == .countdown
             && oldStatus == .working
             && snapshot.status == .finished {
-            showWorkdayReminder()
+            workdayReminderController.presentThenDismiss(after: 3)
         } else {
-            reminderDismissTimer?.invalidate()
-            reminderDismissTimer = nil
             workdayReminderController.hide()
         }
-    }
-
-    private func scheduleReminderDismiss() {
-        guard reminderDismissTimer == nil else { return }
-
-        reminderDismissTimer?.invalidate()
-        let nextTimer = Timer(
-            fireAt: Date().addingTimeInterval(3),
-            interval: 0,
-            target: self,
-            selector: #selector(handleReminderDismissTimer),
-            userInfo: nil,
-            repeats: false
-        )
-        reminderDismissTimer = nextTimer
-        RunLoop.main.add(nextTimer, forMode: .common)
-    }
-
-    @objc private func handleReminderDismissTimer() {
-        workdayReminderController.hide()
     }
 
     // MARK: - Stretchly
@@ -393,149 +363,28 @@ final class CountdownModel: ObservableObject {
     private func makeSnapshot(now: Date) -> StatusSnapshot {
         switch trackingMode {
         case .fixedSchedule:
-            return makeFixedScheduleSnapshot(now: now)
+            return WorkScheduleCalculator.makeFixedScheduleSnapshot(
+                now: now,
+                startHour: startHour,
+                startMinute: startMinute,
+                endHour: endHour,
+                endMinute: endMinute,
+                showsProgress: showsProgress,
+                showsRemainingTime: showsRemainingTime,
+                progressDisplayStyle: progressDisplayStyle,
+                refreshFrequency: refreshFrequency
+            )
         case .countdown:
-            return makeCountdownSnapshot(now: now)
-        }
-    }
-
-    private func makeFixedScheduleSnapshot(now: Date) -> StatusSnapshot {
-        guard let start = dateForToday(hour: startHour, minute: startMinute, reference: now),
-              let end = dateForToday(hour: endHour, minute: endMinute, reference: now),
-              start < end else {
-            return StatusSnapshot(
-                status: .invalid,
-                labelText: nil,
-                progressPercent: nil,
-                progressStyle: nil,
-                labelSymbol: "exclamationmark.triangle"
+            return WorkScheduleCalculator.makeCountdownSnapshot(
+                now: now,
+                manualStartDate: manualStartDate,
+                workDurationHours: workDurationHours,
+                showsProgress: showsProgress,
+                showsRemainingTime: showsRemainingTime,
+                progressDisplayStyle: progressDisplayStyle,
+                refreshFrequency: refreshFrequency
             )
         }
-
-        if now < start {
-            return StatusSnapshot(
-                status: .notStarted,
-                labelText: nil,
-                progressPercent: nil,
-                progressStyle: nil,
-                labelSymbol: "sunrise"
-            )
-        }
-
-        if now >= end {
-            return StatusSnapshot(
-                status: .finished,
-                labelText: nil,
-                progressPercent: nil,
-                progressStyle: nil,
-                labelSymbol: "figure.walk.departure"
-            )
-        }
-
-        return makeWorkingSnapshot(start: start, end: end, now: now)
-    }
-
-    private func makeCountdownSnapshot(now: Date) -> StatusSnapshot {
-        guard let start = manualStartDate,
-              Calendar.current.isDateInToday(start) else {
-            return StatusSnapshot(
-                status: .idle,
-                labelText: nil,
-                progressPercent: nil,
-                progressStyle: nil,
-                labelSymbol: "sunrise"
-            )
-        }
-
-        let end = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
-
-        if now >= end {
-            return StatusSnapshot(
-                status: .finished,
-                labelText: nil,
-                progressPercent: nil,
-                progressStyle: nil,
-                labelSymbol: "figure.walk.departure"
-            )
-        }
-
-        return makeWorkingSnapshot(start: start, end: end, now: now)
-    }
-
-    private func makeWorkingSnapshot(start: Date, end: Date, now: Date) -> StatusSnapshot {
-        let total = end.timeIntervalSince(start)
-        let remaining = end.timeIntervalSince(now)
-        let elapsed = now.timeIntervalSince(start)
-        let progress = max(0, min(100, Int((elapsed / total) * 100)))
-        let timeText = formattedRemainingTime(seconds: remaining)
-        let labelText: String?
-        let progressPercent: Int?
-        let progressStyle: ProgressDisplayStyle?
-
-        if showsProgress {
-            switch progressDisplayStyle {
-            case .percentageText:
-                labelText = showsRemainingTime ? "\(timeText) · \(progress)%" : "\(progress)%"
-                progressPercent = progress
-                progressStyle = progressDisplayStyle
-            case .pieChart:
-                labelText = showsRemainingTime ? timeText : ""
-                progressPercent = progress
-                progressStyle = progressDisplayStyle
-            }
-        } else {
-            labelText = showsRemainingTime ? timeText : nil
-            progressPercent = nil
-            progressStyle = nil
-        }
-
-        return StatusSnapshot(
-            status: .working,
-            labelText: labelText,
-            progressPercent: progressPercent,
-            progressStyle: progressStyle,
-            labelSymbol: "timer"
-        )
-    }
-
-    private func formattedRemainingTime(seconds: TimeInterval) -> String {
-        let rounded: Int
-
-        switch refreshFrequency {
-        case .hour:
-            rounded = Int(seconds.rounded(.down))
-            let hours = max(0, rounded / 3600)
-            return hours > 0 ? "\(hours)h" : "<1h"
-        case .minute:
-            rounded = Int(seconds.rounded(.down))
-            let totalMinutes = max(0, rounded / 60)
-            let hours = totalMinutes / 60
-            let minutes = totalMinutes % 60
-            if hours > 0 {
-                return minutes > 0 ? "\(hours)h\(minutes)m" : "\(hours)h"
-            }
-            return minutes > 0 ? "\(minutes)m" : "<1m"
-        case .second:
-            rounded = max(0, Int(seconds.rounded(.down)))
-            let hours = rounded / 3600
-            let minutes = (rounded % 3600) / 60
-            let secs = rounded % 60
-            if hours > 0 {
-                return "\(hours)h\(minutes)m\(secs)s"
-            }
-            if minutes > 0 {
-                return "\(minutes)m\(secs)s"
-            }
-            return "\(secs)s"
-        }
-    }
-
-    private func dateForToday(hour: Int, minute: Int, reference: Date) -> Date? {
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: reference)
-        components.hour = hour
-        components.minute = minute
-        components.second = 0
-        return Calendar.current.date(from: components)
     }
 
     private enum Keys {
