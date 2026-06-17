@@ -108,14 +108,18 @@ final class CountdownModel: ObservableObject {
         }
     }
 
+    private static let manualStartTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+
     var todayManualStartTime: String? {
         guard let start = manualStartDate,
               Calendar.current.isDateInToday(start) else {
             return nil
         }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: start)
+        return Self.manualStartTimeFormatter.string(from: start)
     }
 
     private var manualStartDate: Date? {
@@ -188,9 +192,7 @@ final class CountdownModel: ObservableObject {
     func startManualWork() {
         let previousStatus = snapshot.status
         manualStartDate = .now
-        refreshSnapshot()
-        startTimer()
-        scheduleAutoQuitIfNeeded()
+        refresh()
         manageStretchlyIfNeeded(from: previousStatus, to: snapshot.status)
     }
 
@@ -210,9 +212,7 @@ final class CountdownModel: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.refreshSnapshot()
-                self?.startTimer()
-                self?.scheduleAutoQuitIfNeeded()
+                self?.refresh()
                 self?.launchAtLogin.refresh()
             }
         }
@@ -269,6 +269,24 @@ final class CountdownModel: ObservableObject {
         return Calendar.current.dateInterval(of: component, for: reference)?.end
     }
 
+    private func workEndDate(reference: Date) -> Date? {
+        switch trackingMode {
+        case .fixedSchedule:
+            guard let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
+                  let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
+                  start < end else {
+                return nil
+            }
+            return end
+        case .countdown:
+            guard let start = manualStartDate,
+                  Calendar.current.isDateInToday(start) else {
+                return nil
+            }
+            return start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
+        }
+    }
+
     private func nextStateTransitionDate(after reference: Date) -> Date? {
         switch trackingMode {
         case .fixedSchedule:
@@ -277,20 +295,9 @@ final class CountdownModel: ObservableObject {
                   start < end else {
                 return nil
             }
-
-            let candidates = [
-                start,
-                end
-            ].filter { $0 > reference }
-
-            return candidates.min()
-
+            return [start, end].filter { $0 > reference }.min()
         case .countdown:
-            guard let start = manualStartDate,
-                  Calendar.current.isDateInToday(start) else {
-                return nil
-            }
-            let end = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
+            guard let end = workEndDate(reference: reference) else { return nil }
             return end > reference ? end : nil
         }
     }
@@ -299,30 +306,11 @@ final class CountdownModel: ObservableObject {
         autoQuitTimer?.invalidate()
         autoQuitTimer = nil
 
-        guard quitsOneMinuteAfterWorkday else {
+        guard quitsOneMinuteAfterWorkday,
+              let end = workEndDate(reference: reference) else {
             return
         }
 
-        let endDate: Date?
-
-        switch trackingMode {
-        case .fixedSchedule:
-            guard let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
-                  let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
-                  start < end else {
-                return
-            }
-            endDate = end
-
-        case .countdown:
-            guard let start = manualStartDate,
-                  Calendar.current.isDateInToday(start) else {
-                return
-            }
-            endDate = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
-        }
-
-        guard let end = endDate else { return }
         let quitAt = end.addingTimeInterval(60)
 
         if reference >= quitAt {

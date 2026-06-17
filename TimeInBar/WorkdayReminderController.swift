@@ -7,10 +7,6 @@ final class WorkdayReminderController {
     private var screenObserver: NSObjectProtocol?
     private var dismissTimer: Timer?
 
-    var isPresented: Bool {
-        !windows.isEmpty
-    }
-
     deinit {
         dismissTimer?.invalidate()
         if let screenObserver {
@@ -22,7 +18,7 @@ final class WorkdayReminderController {
         show()
         dismissTimer?.invalidate()
         dismissTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.hide()
             }
         }
@@ -57,8 +53,9 @@ final class WorkdayReminderController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in
-                guard let self, self.isPresented else { return }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if self.windows.isEmpty { return }
                 self.recreateWindows()
             }
         }
