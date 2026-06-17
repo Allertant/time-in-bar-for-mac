@@ -1,10 +1,10 @@
 import AppKit
 
 @MainActor
-final class StretchlyManager {
+public final class StretchlyManager {
     private static let bundleID = "net.hovancik.stretchly"
 
-    func manage(from oldStatus: WorkStatus, to newStatus: WorkStatus, enabled: Bool) {
+    public func manage(from oldStatus: WorkStatus, to newStatus: WorkStatus, enabled: Bool) {
         guard enabled else { return }
 
         let wasWorking = oldStatus == .working

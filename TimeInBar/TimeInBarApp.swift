@@ -1,4 +1,5 @@
 import SwiftUI
+import TimeInBarKit
 
 @main
 struct TimeInBarApp: App {

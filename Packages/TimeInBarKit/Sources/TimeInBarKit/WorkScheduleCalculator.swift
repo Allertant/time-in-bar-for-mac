@@ -1,7 +1,7 @@
 import Foundation
 
-enum WorkScheduleCalculator {
-    static func makeFixedScheduleSnapshot(
+public enum WorkScheduleCalculator {
+    public static func makeFixedScheduleSnapshot(
         now: Date,
         startHour: Int,
         startMinute: Int,
@@ -55,7 +55,7 @@ enum WorkScheduleCalculator {
         )
     }
 
-    static func makeCountdownSnapshot(
+    public static func makeCountdownSnapshot(
         now: Date,
         manualStartDate: Date?,
         workDurationHours: Double,
@@ -98,7 +98,7 @@ enum WorkScheduleCalculator {
         )
     }
 
-    static func makeWorkingSnapshot(
+    public static func makeWorkingSnapshot(
         start: Date,
         end: Date,
         now: Date,
@@ -143,7 +143,7 @@ enum WorkScheduleCalculator {
         )
     }
 
-    static func formattedRemainingTime(seconds: TimeInterval, frequency: RefreshFrequency) -> String {
+    public static func formattedRemainingTime(seconds: TimeInterval, frequency: RefreshFrequency) -> String {
         let rounded: Int
 
         switch frequency {
@@ -175,7 +175,7 @@ enum WorkScheduleCalculator {
         }
     }
 
-    static func dateForToday(hour: Int, minute: Int, reference: Date) -> Date? {
+    public static func dateForToday(hour: Int, minute: Int, reference: Date) -> Date? {
         var components = Calendar.current.dateComponents([.year, .month, .day], from: reference)
         components.hour = hour
         components.minute = minute

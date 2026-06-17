@@ -1,9 +1,13 @@
 import SwiftUI
 
-struct SettingsView: View {
-    @ObservedObject var model: CountdownModel
+public struct SettingsView: View {
+    @ObservedObject public var model: CountdownModel
 
-    var body: some View {
+    public init(model: CountdownModel) {
+        _model = ObservedObject(wrappedValue: model)
+    }
+
+    public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Preferences")
@@ -167,7 +171,8 @@ struct SettingsView: View {
         case .fixedSchedule:
             return "\(timeText(hour: model.startHour, minute: model.startMinute)) - \(timeText(hour: model.endHour, minute: model.endMinute))"
         case .countdown:
-            return "每天工作 \(formatDuration(model.workDurationHours)) 小时，手动打卡"
+            let format = String(localized: "每天工作 %@ 小时，手动打卡")
+            return String(format: format, formatDuration(model.workDurationHours))
         }
     }
 
@@ -216,10 +221,10 @@ struct SettingsView: View {
 }
 
 private struct CompactTimePicker: View {
-    let title: String
+    public let title: String
     @Binding var selection: Date
 
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.subheadline.weight(.medium))
@@ -239,10 +244,10 @@ private struct CompactTimePicker: View {
 }
 
 private struct SectionLabel: View {
-    let title: String
-    let subtitle: String
+    public let title: String
+    public let subtitle: String
 
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.headline)

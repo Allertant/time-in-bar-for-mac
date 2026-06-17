@@ -1,13 +1,13 @@
 import Foundation
 
-enum RefreshFrequency: String, CaseIterable, Identifiable {
+public enum RefreshFrequency: String, CaseIterable, Identifiable {
     case hour
     case minute
     case second
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var title: String {
+    public var title: String {
         switch self {
         case .hour:
             return "按时"
@@ -18,7 +18,7 @@ enum RefreshFrequency: String, CaseIterable, Identifiable {
         }
     }
 
-    var interval: TimeInterval {
+    public var interval: TimeInterval {
         switch self {
         case .hour:
             return 3600
@@ -30,13 +30,13 @@ enum RefreshFrequency: String, CaseIterable, Identifiable {
     }
 }
 
-enum ProgressDisplayStyle: String, CaseIterable, Identifiable {
+public enum ProgressDisplayStyle: String, CaseIterable, Identifiable {
     case percentageText
     case pieChart
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var title: String {
+    public var title: String {
         switch self {
         case .percentageText:
             return "百分比"
@@ -46,13 +46,13 @@ enum ProgressDisplayStyle: String, CaseIterable, Identifiable {
     }
 }
 
-enum TrackingMode: String, CaseIterable, Identifiable {
+public enum TrackingMode: String, CaseIterable, Identifiable {
     case fixedSchedule
     case countdown
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var title: String {
+    public var title: String {
         switch self {
         case .fixedSchedule:
             return "按时间段"
@@ -62,7 +62,7 @@ enum TrackingMode: String, CaseIterable, Identifiable {
     }
 }
 
-enum WorkStatus: Equatable {
+public enum WorkStatus: Equatable {
     case idle
     case notStarted
     case working
@@ -70,10 +70,10 @@ enum WorkStatus: Equatable {
     case invalid
 }
 
-struct StatusSnapshot {
-    let status: WorkStatus
-    let labelText: String?
-    let progressPercent: Int?
-    let progressStyle: ProgressDisplayStyle?
-    let labelSymbol: String
+public struct StatusSnapshot {
+    public let status: WorkStatus
+    public let labelText: String?
+    public let progressPercent: Int?
+    public let progressStyle: ProgressDisplayStyle?
+    public let labelSymbol: String
 }

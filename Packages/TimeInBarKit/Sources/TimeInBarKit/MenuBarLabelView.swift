@@ -1,9 +1,13 @@
 import SwiftUI
 
-struct MenuBarLabelView: View {
-    let snapshot: StatusSnapshot
+public struct MenuBarLabelView: View {
+    public let snapshot: StatusSnapshot
 
-    var body: some View {
+    public init(snapshot: StatusSnapshot) {
+        self.snapshot = snapshot
+    }
+
+    public var body: some View {
         if let labelText = snapshot.labelText {
             if snapshot.progressStyle == .pieChart,
                let progressPercent = snapshot.progressPercent {

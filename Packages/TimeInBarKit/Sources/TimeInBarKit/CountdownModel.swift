@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 
 @MainActor
-final class CountdownModel: ObservableObject {
+public final class CountdownModel: ObservableObject {
     @Published var trackingMode: TrackingMode {
         didSet {
             defaults.set(trackingMode.rawValue, forKey: Keys.trackingMode)
@@ -99,9 +99,9 @@ final class CountdownModel: ObservableObject {
         }
     }
 
-    let launchAtLogin = LaunchAtLoginService()
+    public let launchAtLogin = LaunchAtLoginService()
 
-    @Published private(set) var snapshot: StatusSnapshot {
+    @Published public private(set) var snapshot: StatusSnapshot {
         didSet {
             manageStretchlyIfNeeded(from: oldValue.status, to: snapshot.status)
             updateWorkdayReminderVisibility(oldStatus: oldValue.status)
@@ -114,7 +114,7 @@ final class CountdownModel: ObservableObject {
         return formatter
     }()
 
-    var todayManualStartTime: String? {
+    public var todayManualStartTime: String? {
         guard let start = manualStartDate,
               Calendar.current.isDateInToday(start) else {
             return nil
@@ -139,7 +139,7 @@ final class CountdownModel: ObservableObject {
     private var wakeObserver: NSObjectProtocol?
     private let workdayReminderController = WorkdayReminderController()
 
-    init(defaults: UserDefaults = .standard) {
+    public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.launchedAt = .now
         let storedMode = defaults.string(forKey: Keys.trackingMode)
@@ -185,11 +185,11 @@ final class CountdownModel: ObservableObject {
         }
     }
 
-    func quitApp() {
+    public func quitApp() {
         NSApp.terminate(nil)
     }
 
-    func startManualWork() {
+    public func startManualWork() {
         let previousStatus = snapshot.status
         manualStartDate = .now
         refresh()
@@ -201,7 +201,7 @@ final class CountdownModel: ObservableObject {
         startTimer()
     }
 
-    func showFullScreenWorkdayReminderForTesting() {
+    public func showFullScreenWorkdayReminderForTesting() {
         workdayReminderController.presentThenDismiss(after: 3)
     }
 

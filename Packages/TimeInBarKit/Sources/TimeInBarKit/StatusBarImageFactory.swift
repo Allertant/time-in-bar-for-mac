@@ -1,9 +1,9 @@
 import AppKit
 
-enum StatusBarImageFactory {
+public enum StatusBarImageFactory {
     private static let pieSize = NSSize(width: 14, height: 14)
 
-    static func makeTimeAndPieImage(text: String, progress: Double) -> NSImage {
+    public static func makeTimeAndPieImage(text: String, progress: Double) -> NSImage {
         let textFont = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
         let textAttributes: [NSAttributedString.Key: Any] = [
             .font: textFont,

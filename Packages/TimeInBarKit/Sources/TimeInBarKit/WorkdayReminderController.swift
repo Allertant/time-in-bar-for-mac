@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class WorkdayReminderController {
+public final class WorkdayReminderController {
     private var windows: [WorkdayReminderWindow] = []
     private var screenObserver: NSObjectProtocol?
     private var dismissTimer: Timer?
@@ -14,7 +14,7 @@ final class WorkdayReminderController {
         }
     }
 
-    func presentThenDismiss(after seconds: TimeInterval) {
+    public func presentThenDismiss(after seconds: TimeInterval) {
         show()
         dismissTimer?.invalidate()
         dismissTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
@@ -24,7 +24,7 @@ final class WorkdayReminderController {
         }
     }
 
-    func hide() {
+    public func hide() {
         dismissTimer?.invalidate()
         dismissTimer = nil
         for window in windows {
@@ -114,7 +114,7 @@ final class WorkdayReminderController {
 }
 
 private final class WorkdayReminderWindow: NSWindow {
-    var onDismiss: (() -> Void)?
+    public var onDismiss: (() -> Void)?
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
@@ -135,7 +135,7 @@ private final class WorkdayReminderWindow: NSWindow {
 }
 
 private struct WorkdayReminderView: View {
-    var body: some View {
+    public var body: some View {
         GeometryReader { proxy in
             ZStack {
                 Color.black
