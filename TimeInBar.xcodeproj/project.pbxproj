@@ -12,6 +12,11 @@
 		A10000032026041400000001 /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000122026041400000001 /* MenuContentView.swift */; };
 		A10000042026041400000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000132026041400000001 /* SettingsView.swift */; };
 		A10000192026051800000001 /* WorkdayReminderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001A2026051800000001 /* WorkdayReminderController.swift */; };
+		A10000212026121700000001 /* Domain.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000202026121700000001 /* Domain.swift */; };
+		A10000232026121700000001 /* MenuBarLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000222026121700000001 /* MenuBarLabelView.swift */; };
+		A10000252026121700000001 /* StatusBarImageFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000242026121700000001 /* StatusBarImageFactory.swift */; };
+		A10000272026121700000002 /* StretchlyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000262026121700000002 /* StretchlyManager.swift */; };
+		A10000292026121700000003 /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000282026121700000003 /* LaunchAtLoginService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +27,11 @@
 		A10000132026041400000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A10000142026041400000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A100001A2026051800000001 /* WorkdayReminderController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkdayReminderController.swift; sourceTree = "<group>"; };
+		A10000202026121700000001 /* Domain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain.swift; sourceTree = "<group>"; };
+		A10000222026121700000001 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
+		A10000242026121700000001 /* StatusBarImageFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarImageFactory.swift; sourceTree = "<group>"; };
+		A10000262026121700000002 /* StretchlyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StretchlyManager.swift; sourceTree = "<group>"; };
+		A10000282026121700000003 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,9 +66,14 @@
 			children = (
 				A10000102026041400000001 /* TimeInBarApp.swift */,
 				A10000112026041400000001 /* CountdownModel.swift */,
+				A10000202026121700000001 /* Domain.swift */,
 				A100001A2026051800000001 /* WorkdayReminderController.swift */,
 				A10000122026041400000001 /* MenuContentView.swift */,
+				A10000222026121700000001 /* MenuBarLabelView.swift */,
 				A10000132026041400000001 /* SettingsView.swift */,
+				A10000242026121700000001 /* StatusBarImageFactory.swift */,
+				A10000262026121700000002 /* StretchlyManager.swift */,
+				A10000282026121700000003 /* LaunchAtLoginService.swift */,
 				A10000142026041400000001 /* Info.plist */,
 			);
 			path = TimeInBar;
@@ -134,9 +149,14 @@
 			files = (
 				A10000012026041400000001 /* TimeInBarApp.swift in Sources */,
 				A10000022026041400000001 /* CountdownModel.swift in Sources */,
+				A10000212026121700000001 /* Domain.swift in Sources */,
 				A10000192026051800000001 /* WorkdayReminderController.swift in Sources */,
 				A10000032026041400000001 /* MenuContentView.swift in Sources */,
+				A10000232026121700000001 /* MenuBarLabelView.swift in Sources */,
 				A10000042026041400000001 /* SettingsView.swift in Sources */,
+				A10000252026121700000001 /* StatusBarImageFactory.swift in Sources */,
+				A10000272026121700000002 /* StretchlyManager.swift in Sources */,
+				A10000292026121700000003 /* LaunchAtLoginService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,0 +1,68 @@
+import AppKit
+
+enum StatusBarImageFactory {
+    private static let pieSize = NSSize(width: 14, height: 14)
+
+    static func makeTimeAndPieImage(text: String, progress: Double) -> NSImage {
+        let textFont = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
+        let textAttributes: [NSAttributedString.Key: Any] = [
+            .font: textFont,
+            .foregroundColor: NSColor.labelColor
+        ]
+        let textSize = NSAttributedString(string: text, attributes: textAttributes).size()
+        let spacing: CGFloat = text.isEmpty ? 0 : 4
+        let canvasSize = NSSize(
+            width: ceil(textSize.width + spacing + pieSize.width),
+            height: ceil(max(textSize.height, pieSize.height))
+        )
+
+        let image = NSImage(size: canvasSize)
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let textOrigin = NSPoint(
+            x: 0,
+            y: floor((canvasSize.height - textSize.height) / 2)
+        )
+        if !text.isEmpty {
+            NSString(string: text).draw(at: textOrigin, withAttributes: textAttributes)
+        }
+
+        let pieOrigin = NSPoint(
+            x: ceil(textSize.width + spacing),
+            y: floor((canvasSize.height - pieSize.height) / 2)
+        )
+        let pieRect = NSRect(origin: pieOrigin, size: pieSize)
+        drawPie(progress: progress, in: pieRect)
+
+        image.isTemplate = false
+        return image
+    }
+
+    private static func drawPie(progress: Double, in rect: NSRect) {
+        let clamped = min(max(progress, 0), 1)
+        let circleRect = NSRect(origin: rect.origin, size: pieSize).insetBy(dx: 0.5, dy: 0.5)
+        let background = NSBezierPath(ovalIn: circleRect)
+        NSColor.labelColor.withAlphaComponent(0.14).setFill()
+        background.fill()
+
+        if clamped > 0 {
+            let pie = NSBezierPath()
+            pie.move(to: NSPoint(x: circleRect.midX, y: circleRect.midY))
+            pie.appendArc(
+                withCenter: NSPoint(x: circleRect.midX, y: circleRect.midY),
+                radius: circleRect.width / 2,
+                startAngle: 90,
+                endAngle: 90 - (360 * clamped),
+                clockwise: true
+            )
+            pie.close()
+            NSColor.labelColor.setFill()
+            pie.fill()
+        }
+
+        NSColor.labelColor.withAlphaComponent(0.2).setStroke()
+        background.lineWidth = 0.5
+        background.stroke()
+    }
+}

@@ -1,105 +1,41 @@
 import AppKit
 import Foundation
-import ServiceManagement
-
-enum RefreshFrequency: String, CaseIterable, Identifiable {
-    case hour
-    case minute
-    case second
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .hour:
-            return "按时"
-        case .minute:
-            return "按分"
-        case .second:
-            return "按秒"
-        }
-    }
-
-    var interval: TimeInterval {
-        switch self {
-        case .hour:
-            return 3600
-        case .minute:
-            return 60
-        case .second:
-            return 1
-        }
-    }
-}
-
-enum ProgressDisplayStyle: String, CaseIterable, Identifiable {
-    case percentageText
-    case pieChart
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .percentageText:
-            return "百分比"
-        case .pieChart:
-            return "饼图"
-        }
-    }
-}
-
-enum TrackingMode: String, CaseIterable, Identifiable {
-    case fixedSchedule
-    case countdown
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .fixedSchedule:
-            return "按时间段"
-        case .countdown:
-            return "按时长"
-        }
-    }
-}
-
-enum WorkStatus: Equatable {
-    case idle
-    case notStarted
-    case working
-    case finished
-    case invalid
-}
-
-struct StatusSnapshot {
-    let status: WorkStatus
-    let labelText: String?
-    let progressPercent: Int?
-    let progressStyle: ProgressDisplayStyle?
-    let labelSymbol: String
-}
 
 @MainActor
 final class CountdownModel: ObservableObject {
     @Published var trackingMode: TrackingMode {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(trackingMode.rawValue, forKey: Keys.trackingMode)
+            refresh()
+        }
     }
 
     @Published var startHour: Int {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(startHour, forKey: Keys.startHour)
+            refresh()
+        }
     }
 
     @Published var startMinute: Int {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(startMinute, forKey: Keys.startMinute)
+            refresh()
+        }
     }
 
     @Published var endHour: Int {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(endHour, forKey: Keys.endHour)
+            refresh()
+        }
     }
 
     @Published var endMinute: Int {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(endMinute, forKey: Keys.endMinute)
+            refresh()
+        }
     }
 
     @Published var workDurationHours: Double {
@@ -109,42 +45,61 @@ final class CountdownModel: ObservableObject {
                 workDurationHours = normalized
                 return
             }
-            persistAndRefresh()
+            defaults.set(workDurationHours, forKey: Keys.workDurationHours)
+            refresh()
         }
     }
 
     @Published var refreshFrequency: RefreshFrequency {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(refreshFrequency.rawValue, forKey: Keys.refreshFrequency)
+            refresh()
+        }
     }
 
     @Published var progressDisplayStyle: ProgressDisplayStyle {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(progressDisplayStyle.rawValue, forKey: Keys.progressDisplayStyle)
+            refresh()
+        }
     }
 
     @Published var showsRemainingTime: Bool {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(showsRemainingTime, forKey: Keys.showsRemainingTime)
+            refresh()
+        }
     }
 
     @Published var showsProgress: Bool {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(showsProgress, forKey: Keys.showsProgress)
+            refresh()
+        }
     }
 
     @Published var quitsOneMinuteAfterWorkday: Bool {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(quitsOneMinuteAfterWorkday, forKey: Keys.quitsOneMinuteAfterWorkday)
+            refresh()
+        }
     }
 
     @Published var managesStretchly: Bool {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(managesStretchly, forKey: Keys.managesStretchly)
+            refresh()
+        }
     }
 
     @Published var showsFullScreenReminderAfterWorkday: Bool {
-        didSet { persistAndRefresh() }
+        didSet {
+            defaults.set(showsFullScreenReminderAfterWorkday, forKey: Keys.showsFullScreenReminderAfterWorkday)
+            refresh()
+        }
     }
 
-    @Published private(set) var launchAtLoginEnabled = false
-    @Published private(set) var launchAtLoginRequiresApproval = false
-    @Published private(set) var launchAtLoginUnsupported = false
-    @Published private(set) var launchAtLoginErrorMessage: String?
+    let launchAtLogin = LaunchAtLoginService()
 
     @Published private(set) var snapshot: StatusSnapshot {
         didSet {
@@ -177,7 +132,7 @@ final class CountdownModel: ObservableObject {
     private let launchedAt: Date
     private var timer: Timer?
     private var autoQuitTimer: Timer?
-    private var reminderQuitTimer: Timer?
+    private var reminderDismissTimer: Timer?
     private var wakeObserver: NSObjectProtocol?
     private let workdayReminderController = WorkdayReminderController()
 
@@ -216,13 +171,13 @@ final class CountdownModel: ObservableObject {
         refreshSnapshot()
         startTimer()
         observeWakeNotifications()
-        refreshLaunchAtLoginStatus()
+        launchAtLogin.refresh()
     }
 
     deinit {
         timer?.invalidate()
         autoQuitTimer?.invalidate()
-        reminderQuitTimer?.invalidate()
+        reminderDismissTimer?.invalidate()
         if let wakeObserver {
             NotificationCenter.default.removeObserver(wakeObserver)
         }
@@ -230,66 +185,6 @@ final class CountdownModel: ObservableObject {
 
     func quitApp() {
         NSApp.terminate(nil)
-    }
-
-    func refreshLaunchAtLoginStatus() {
-        launchAtLoginErrorMessage = nil
-
-        guard #available(macOS 13.0, *) else {
-            launchAtLoginUnsupported = true
-            launchAtLoginEnabled = false
-            launchAtLoginRequiresApproval = false
-            return
-        }
-
-        launchAtLoginUnsupported = false
-
-        let status = SMAppService.mainApp.status
-        switch status {
-        case .enabled:
-            launchAtLoginEnabled = true
-            launchAtLoginRequiresApproval = false
-        case .requiresApproval:
-            launchAtLoginEnabled = true
-            launchAtLoginRequiresApproval = true
-        case .notRegistered:
-            launchAtLoginEnabled = false
-            launchAtLoginRequiresApproval = false
-        case .notFound:
-            launchAtLoginEnabled = false
-            launchAtLoginRequiresApproval = false
-            launchAtLoginErrorMessage = "系统未找到可注册的启动项。"
-        @unknown default:
-            launchAtLoginEnabled = false
-            launchAtLoginRequiresApproval = false
-            launchAtLoginErrorMessage = "无法确认开机启动状态。"
-        }
-    }
-
-    func setLaunchAtLoginEnabled(_ isEnabled: Bool) {
-        guard #available(macOS 13.0, *) else {
-            launchAtLoginUnsupported = true
-            return
-        }
-
-        launchAtLoginErrorMessage = nil
-
-        do {
-            if isEnabled {
-                try SMAppService.mainApp.register()
-            } else {
-                try SMAppService.mainApp.unregister()
-            }
-        } catch {
-            launchAtLoginErrorMessage = error.localizedDescription
-        }
-
-        refreshLaunchAtLoginStatus()
-    }
-
-    func openLoginItemsSettings() {
-        guard #available(macOS 13.0, *) else { return }
-        SMAppService.openSystemSettingsLoginItems()
     }
 
     func startManualWork() {
@@ -301,23 +196,9 @@ final class CountdownModel: ObservableObject {
         manageStretchlyIfNeeded(from: previousStatus, to: snapshot.status)
     }
 
-    private func persistAndRefresh() {
-        defaults.set(trackingMode.rawValue, forKey: Keys.trackingMode)
-        defaults.set(startHour, forKey: Keys.startHour)
-        defaults.set(startMinute, forKey: Keys.startMinute)
-        defaults.set(endHour, forKey: Keys.endHour)
-        defaults.set(endMinute, forKey: Keys.endMinute)
-        defaults.set(workDurationHours, forKey: Keys.workDurationHours)
-        defaults.set(refreshFrequency.rawValue, forKey: Keys.refreshFrequency)
-        defaults.set(progressDisplayStyle.rawValue, forKey: Keys.progressDisplayStyle)
-        defaults.set(showsRemainingTime, forKey: Keys.showsRemainingTime)
-        defaults.set(showsProgress, forKey: Keys.showsProgress)
-        defaults.set(quitsOneMinuteAfterWorkday, forKey: Keys.quitsOneMinuteAfterWorkday)
-        defaults.set(managesStretchly, forKey: Keys.managesStretchly)
-        defaults.set(showsFullScreenReminderAfterWorkday, forKey: Keys.showsFullScreenReminderAfterWorkday)
+    private func refresh() {
         refreshSnapshot()
         startTimer()
-        scheduleAutoQuitIfNeeded()
     }
 
     func showFullScreenWorkdayReminderForTesting() {
@@ -340,7 +221,7 @@ final class CountdownModel: ObservableObject {
                 self?.refreshSnapshot()
                 self?.startTimer()
                 self?.scheduleAutoQuitIfNeeded()
-                self?.refreshLaunchAtLoginStatus()
+                self?.launchAtLogin.refresh()
             }
         }
     }
@@ -475,16 +356,16 @@ final class CountdownModel: ObservableObject {
             && snapshot.status == .finished {
             showWorkdayReminder()
         } else {
-            reminderQuitTimer?.invalidate()
-            reminderQuitTimer = nil
+            reminderDismissTimer?.invalidate()
+            reminderDismissTimer = nil
             workdayReminderController.hide()
         }
     }
 
     private func scheduleReminderDismiss() {
-        guard reminderQuitTimer == nil else { return }
+        guard reminderDismissTimer == nil else { return }
 
-        reminderQuitTimer?.invalidate()
+        reminderDismissTimer?.invalidate()
         let nextTimer = Timer(
             fireAt: Date().addingTimeInterval(3),
             interval: 0,
@@ -493,7 +374,7 @@ final class CountdownModel: ObservableObject {
             userInfo: nil,
             repeats: false
         )
-        reminderQuitTimer = nextTimer
+        reminderDismissTimer = nextTimer
         RunLoop.main.add(nextTimer, forMode: .common)
     }
 
@@ -503,37 +384,10 @@ final class CountdownModel: ObservableObject {
 
     // MARK: - Stretchly
 
-    private static let stretchlyBundleID = "net.hovancik.stretchly"
+    private let stretchlyManager = StretchlyManager()
 
     private func manageStretchlyIfNeeded(from oldStatus: WorkStatus, to newStatus: WorkStatus) {
-        guard managesStretchly else { return }
-
-        let wasWorking = oldStatus == .working
-        let isWorking = newStatus == .working
-
-        if !wasWorking && isWorking {
-            launchStretchly()
-        } else if wasWorking && !isWorking {
-            quitStretchly()
-        }
-    }
-
-    private func launchStretchly() {
-        let bundleID = Self.stretchlyBundleID
-        let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-        guard running.isEmpty else { return }
-
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            return
-        }
-        NSWorkspace.shared.open(url)
-    }
-
-    private func quitStretchly() {
-        let running = NSRunningApplication.runningApplications(withBundleIdentifier: Self.stretchlyBundleID)
-        for app in running {
-            app.terminate()
-        }
+        stretchlyManager.manage(from: oldStatus, to: newStatus, enabled: managesStretchly)
     }
 
     private func makeSnapshot(now: Date) -> StatusSnapshot {
