@@ -200,10 +200,6 @@ public final class CountdownModel: ObservableObject {
         startTimer()
     }
 
-    public func showFullScreenWorkdayReminderForTesting() {
-        workdayReminderController.presentThenDismiss(after: 3)
-    }
-
     public func setWorkDurationHours(_ hours: Double) {
         workDurationHours = normalizeWorkDuration(hours)
     }
