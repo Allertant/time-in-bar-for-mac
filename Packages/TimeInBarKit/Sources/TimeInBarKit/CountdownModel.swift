@@ -225,22 +225,17 @@ public final class CountdownModel: ObservableObject {
         timer?.invalidate()
         guard let nextFireDate = nextRefreshDate(after: reference) else { return }
 
-        let nextTimer = Timer(
-            fireAt: nextFireDate,
-            interval: 0,
-            target: self,
-            selector: #selector(handleRefreshTimer),
-            userInfo: nil,
-            repeats: false
-        )
+        let interval = max(0, nextFireDate.timeIntervalSince(reference))
+        let nextTimer = Timer(timeInterval: interval, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let now = Date()
+                self.refreshSnapshot(now: now)
+                self.startTimer(reference: now)
+            }
+        }
         timer = nextTimer
         RunLoop.main.add(nextTimer, forMode: .common)
-    }
-
-    @objc private func handleRefreshTimer() {
-        let now = Date()
-        refreshSnapshot(now: now)
-        startTimer(reference: now)
     }
 
     private func refreshSnapshot(now: Date = .now) {
@@ -323,13 +318,14 @@ public final class CountdownModel: ObservableObject {
             return
         }
 
-        let nextTimer = Timer(fireAt: quitAt, interval: 0, target: self, selector: #selector(handleAutoQuitTimer), userInfo: nil, repeats: false)
+        let interval = max(0, quitAt.timeIntervalSince(reference))
+        let nextTimer = Timer(timeInterval: interval, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.quitApp()
+            }
+        }
         autoQuitTimer = nextTimer
         RunLoop.main.add(nextTimer, forMode: .common)
-    }
-
-    @objc private func handleAutoQuitTimer() {
-        quitApp()
     }
 
     private func updateWorkdayReminderVisibility(oldStatus: WorkStatus) {
