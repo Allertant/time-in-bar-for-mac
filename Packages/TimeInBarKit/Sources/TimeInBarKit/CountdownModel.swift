@@ -263,15 +263,19 @@ public final class CountdownModel: ObservableObject {
         return Calendar.current.dateInterval(of: component, for: reference)?.end
     }
 
+    private func fixedScheduleBounds(reference: Date) -> (start: Date, end: Date)? {
+        guard let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
+              let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
+              start < end else {
+            return nil
+        }
+        return (start, end)
+    }
+
     private func workEndDate(reference: Date) -> Date? {
         switch trackingMode {
         case .fixedSchedule:
-            guard let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
-                  let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
-                  start < end else {
-                return nil
-            }
-            return end
+            return fixedScheduleBounds(reference: reference)?.end
         case .countdown:
             guard let start = manualStartDate,
                   Calendar.current.isDateInToday(start) else {
@@ -284,12 +288,8 @@ public final class CountdownModel: ObservableObject {
     private func nextStateTransitionDate(after reference: Date) -> Date? {
         switch trackingMode {
         case .fixedSchedule:
-            guard let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
-                  let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
-                  start < end else {
-                return nil
-            }
-            return [start, end].filter { $0 > reference }.min()
+            guard let bounds = fixedScheduleBounds(reference: reference) else { return nil }
+            return [bounds.start, bounds.end].filter { $0 > reference }.min()
         case .countdown:
             guard let end = workEndDate(reference: reference) else { return nil }
             return end > reference ? end : nil
