@@ -40,14 +40,13 @@ public final class CountdownModel: ObservableObject {
 
     @Published var workDurationHours: Double {
         didSet {
-            let normalized = (workDurationHours * 2).rounded() / 2
-            if workDurationHours != normalized {
-                workDurationHours = normalized
-                return
-            }
             defaults.set(workDurationHours, forKey: Keys.workDurationHours)
             refresh()
         }
+    }
+
+    private func normalizeWorkDuration(_ hours: Double) -> Double {
+        (hours * 2).rounded() / 2
     }
 
     @Published var refreshFrequency: RefreshFrequency {
@@ -203,6 +202,10 @@ public final class CountdownModel: ObservableObject {
 
     public func showFullScreenWorkdayReminderForTesting() {
         workdayReminderController.presentThenDismiss(after: 3)
+    }
+
+    public func setWorkDurationHours(_ hours: Double) {
+        workDurationHours = normalizeWorkDuration(hours)
     }
 
     private func observeWakeNotifications() {

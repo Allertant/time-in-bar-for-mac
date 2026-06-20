@@ -36,7 +36,7 @@ public struct SettingsView: View {
                     } else {
                         LabeledContent("工作时长") {
                             HStack(spacing: 4) {
-                                TextField("", value: $model.workDurationHours, format: .number.precision(.fractionLength(0...1)))
+                                TextField("", value: workDurationBinding, format: .number.precision(.fractionLength(0...1)))
                                     .textFieldStyle(.roundedBorder)
                                     .frame(width: 50)
                                     .multilineTextAlignment(.trailing)
@@ -184,6 +184,13 @@ public struct SettingsView: View {
                 model.startHour = components.hour ?? model.startHour
                 model.startMinute = components.minute ?? model.startMinute
             }
+        )
+    }
+
+    private var workDurationBinding: Binding<Double> {
+        Binding(
+            get: { model.workDurationHours },
+            set: { model.setWorkDurationHours($0) }
         )
     }
 
