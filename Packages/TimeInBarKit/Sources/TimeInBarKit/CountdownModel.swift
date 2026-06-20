@@ -312,7 +312,9 @@ public final class CountdownModel: ObservableObject {
         let quitAt = end.addingTimeInterval(60)
 
         if reference >= quitAt {
-            if launchedAt < quitAt {
+            // Only auto-quit if the app was running before work ended;
+            // launching after work should not trigger an immediate quit.
+            if launchedAt < end {
                 quitApp()
             }
             return
