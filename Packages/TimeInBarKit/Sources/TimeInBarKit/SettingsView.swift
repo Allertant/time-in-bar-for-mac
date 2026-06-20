@@ -222,10 +222,10 @@ public struct SettingsView: View {
 }
 
 private struct CompactTimePicker: View {
-    public let title: String
+    let title: String
     @Binding var selection: Date
 
-    public var body: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.subheadline.weight(.medium))
@@ -245,10 +245,10 @@ private struct CompactTimePicker: View {
 }
 
 private struct SectionLabel: View {
-    public let title: String
-    public let subtitle: String
+    let title: String
+    let subtitle: String
 
-    public var body: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.headline)
