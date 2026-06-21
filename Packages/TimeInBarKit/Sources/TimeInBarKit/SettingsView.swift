@@ -133,15 +133,6 @@ public struct SettingsView: View {
                 SectionLabel(title: "下班提示", subtitle: "下班到点后用黑色全屏提示休息")
             }
 
-            if model.trackingMode == .fixedSchedule && model.snapshot.status == .invalid {
-                Label("结束时间必须晚于开始时间。", systemImage: "exclamationmark.triangle.fill")
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
-            }
-
             if model.trackingMode == .countdown && model.workDurationHours <= 0 {
                 Label("工作时长必须大于 0。", systemImage: "exclamationmark.triangle.fill")
                     .font(.subheadline)

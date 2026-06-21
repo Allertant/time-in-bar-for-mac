@@ -1,6 +1,40 @@
 import Foundation
 
 public enum WorkScheduleCalculator {
+    /// Resolves the relevant fixed-schedule shift window for `now`.
+    /// For day shifts (start < end) the window is [start, end] today.
+    /// For overnight shifts (start >= end) end is the next day; the window
+    /// wrapping the current moment is returned (last night's or tonight's).
+    public static func currentFixedScheduleWindow(
+        now: Date,
+        startHour: Int,
+        startMinute: Int,
+        endHour: Int,
+        endMinute: Int
+    ) -> (start: Date, end: Date)? {
+        guard let startToday = dateForToday(hour: startHour, minute: startMinute, reference: now),
+              let endToday = dateForToday(hour: endHour, minute: endMinute, reference: now) else {
+            return nil
+        }
+
+        let isOvernight = startToday >= endToday
+        guard isOvernight else {
+            return (startToday, endToday)
+        }
+
+        let day: TimeInterval = 86400
+        // Overnight: end is the day after start. Three regions relative to `now`:
+        //   now < endToday            → still in last night's shift
+        //   endToday <= now < startToday → daytime, between shifts (finished)
+        //   now >= startToday         → in tonight's shift
+        if now < startToday {
+            // Last night's shift: started yesterday at startHour, ends today at endHour.
+            return (startToday.addingTimeInterval(-day), endToday)
+        }
+        // Tonight's shift: starts today at startHour, ends tomorrow at endHour.
+        return (startToday, endToday.addingTimeInterval(day))
+    }
+
     public static func makeFixedScheduleSnapshot(
         now: Date,
         startHour: Int,
@@ -12,9 +46,10 @@ public enum WorkScheduleCalculator {
         progressDisplayStyle: ProgressDisplayStyle,
         refreshFrequency: RefreshFrequency
     ) -> StatusSnapshot {
-        guard let start = dateForToday(hour: startHour, minute: startMinute, reference: now),
-              let end = dateForToday(hour: endHour, minute: endMinute, reference: now),
-              start < end else {
+        guard let window = currentFixedScheduleWindow(
+            now: now, startHour: startHour, startMinute: startMinute,
+            endHour: endHour, endMinute: endMinute
+        ) else {
             return StatusSnapshot(
                 status: .invalid,
                 labelText: nil,
@@ -24,7 +59,7 @@ public enum WorkScheduleCalculator {
             )
         }
 
-        if now < start {
+        if now < window.start {
             return StatusSnapshot(
                 status: .notStarted,
                 labelText: nil,
@@ -34,7 +69,7 @@ public enum WorkScheduleCalculator {
             )
         }
 
-        if now >= end {
+        if now >= window.end {
             return StatusSnapshot(
                 status: .finished,
                 labelText: nil,
@@ -45,8 +80,8 @@ public enum WorkScheduleCalculator {
         }
 
         return makeWorkingSnapshot(
-            start: start,
-            end: end,
+            start: window.start,
+            end: window.end,
             now: now,
             showsProgress: showsProgress,
             showsRemainingTime: showsRemainingTime,

@@ -262,12 +262,13 @@ public final class CountdownModel: ObservableObject {
     }
 
     private func fixedScheduleBounds(reference: Date) -> (start: Date, end: Date)? {
-        guard let start = WorkScheduleCalculator.dateForToday(hour: startHour, minute: startMinute, reference: reference),
-              let end = WorkScheduleCalculator.dateForToday(hour: endHour, minute: endMinute, reference: reference),
-              start < end else {
-            return nil
-        }
-        return (start, end)
+        WorkScheduleCalculator.currentFixedScheduleWindow(
+            now: reference,
+            startHour: startHour,
+            startMinute: startMinute,
+            endHour: endHour,
+            endMinute: endMinute
+        )
     }
 
     private func workEndDate(reference: Date) -> Date? {

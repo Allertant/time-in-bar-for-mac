@@ -155,16 +155,48 @@ struct WorkScheduleCalculatorTests {
         #expect(snapshot.status == .notStarted)
     }
 
-    @Test func makeFixedScheduleSnapshotInvalid() {
+    @Test func makeFixedScheduleSnapshotOvernightWorkingTonight() {
+        // Overnight shift 22:00→06:00. At 23:00 (after tonight's start) → working.
         let ref = Calendar.current.startOfDay(for: Date())
+        let lateEvening = ref.addingTimeInterval(23 * 3600)
 
         let snapshot = WorkScheduleCalculator.makeFixedScheduleSnapshot(
-            now: ref, startHour: 17, startMinute: 0,
-            endHour: 8, endMinute: 0,
+            now: lateEvening, startHour: 22, startMinute: 0,
+            endHour: 6, endMinute: 0,
             showsProgress: false, showsRemainingTime: false,
             progressDisplayStyle: .percentageText,
             refreshFrequency: .minute
         )
-        #expect(snapshot.status == .invalid)
+        #expect(snapshot.status == .working)
+    }
+
+    @Test func makeFixedScheduleSnapshotOvernightWorkingEarlyMorning() {
+        // Overnight shift 22:00→06:00. At 03:00 → still in last night's shift.
+        let ref = Calendar.current.startOfDay(for: Date())
+        let earlyMorning = ref.addingTimeInterval(3 * 3600)
+
+        let snapshot = WorkScheduleCalculator.makeFixedScheduleSnapshot(
+            now: earlyMorning, startHour: 22, startMinute: 0,
+            endHour: 6, endMinute: 0,
+            showsProgress: false, showsRemainingTime: false,
+            progressDisplayStyle: .percentageText,
+            refreshFrequency: .minute
+        )
+        #expect(snapshot.status == .working)
+    }
+
+    @Test func makeFixedScheduleSnapshotOvernightFinishedDaytime() {
+        // Overnight shift 22:00→06:00. At 12:00 (between shifts) → finished.
+        let ref = Calendar.current.startOfDay(for: Date())
+        let noon = ref.addingTimeInterval(12 * 3600)
+
+        let snapshot = WorkScheduleCalculator.makeFixedScheduleSnapshot(
+            now: noon, startHour: 22, startMinute: 0,
+            endHour: 6, endMinute: 0,
+            showsProgress: false, showsRemainingTime: false,
+            progressDisplayStyle: .percentageText,
+            refreshFrequency: .minute
+        )
+        #expect(snapshot.status == .finished)
     }
 }
