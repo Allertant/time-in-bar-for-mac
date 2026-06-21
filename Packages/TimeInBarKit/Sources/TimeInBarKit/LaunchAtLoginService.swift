@@ -47,8 +47,7 @@ public final class LaunchAtLoginService: ObservableObject {
             return
         }
 
-        errorMessage = nil
-
+        var caughtError: String?
         do {
             if isEnabled {
                 try SMAppService.mainApp.register()
@@ -56,10 +55,15 @@ public final class LaunchAtLoginService: ObservableObject {
                 try SMAppService.mainApp.unregister()
             }
         } catch {
-            errorMessage = error.localizedDescription
+            caughtError = error.localizedDescription
         }
 
+        // refresh() re-reads status and clears errorMessage; re-apply the
+        // caught error afterwards so the user actually sees what went wrong.
         refresh()
+        if let caughtError {
+            errorMessage = caughtError
+        }
     }
 
     public func openSettings() {
