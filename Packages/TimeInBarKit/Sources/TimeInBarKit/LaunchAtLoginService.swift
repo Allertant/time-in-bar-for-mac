@@ -5,20 +5,10 @@ import ServiceManagement
 public final class LaunchAtLoginService: ObservableObject {
     @Published private(set) var enabled = false
     @Published private(set) var requiresApproval = false
-    @Published private(set) var unsupported = false
     @Published private(set) var errorMessage: String?
 
     public func refresh() {
         errorMessage = nil
-
-        guard #available(macOS 13.0, *) else {
-            unsupported = true
-            enabled = false
-            requiresApproval = false
-            return
-        }
-
-        unsupported = false
 
         switch SMAppService.mainApp.status {
         case .enabled:
@@ -42,11 +32,6 @@ public final class LaunchAtLoginService: ObservableObject {
     }
 
     public func setEnabled(_ isEnabled: Bool) {
-        guard #available(macOS 13.0, *) else {
-            unsupported = true
-            return
-        }
-
         var caughtError: String?
         do {
             if isEnabled {
@@ -67,7 +52,6 @@ public final class LaunchAtLoginService: ObservableObject {
     }
 
     public func openSettings() {
-        guard #available(macOS 13.0, *) else { return }
         SMAppService.openSystemSettingsLoginItems()
     }
 }

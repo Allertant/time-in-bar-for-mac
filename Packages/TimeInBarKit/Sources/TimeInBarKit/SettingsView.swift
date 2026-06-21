@@ -186,17 +186,12 @@ private struct StartupSection: View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
                 Toggle("登录后自动启动", isOn: launchAtLoginBinding)
-                    .disabled(model.launchAtLogin.unsupported)
 
                 Toggle("下班 1 分钟后自动退出", isOn: $model.quitsOneMinuteAfterWorkday)
 
                 Toggle("上班时自动启动 Stretchly", isOn: $model.managesStretchly)
 
-                if model.launchAtLogin.unsupported {
-                    Text("当前系统版本不支持应用内配置开机自动启动。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else if model.launchAtLogin.requiresApproval {
+                if model.launchAtLogin.requiresApproval {
                     Text("系统还需要你的确认，启用后请在系统设置的登录项中完成授权。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
