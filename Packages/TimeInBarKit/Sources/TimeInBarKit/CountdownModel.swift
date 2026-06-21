@@ -114,13 +114,10 @@ public final class CountdownModel: ObservableObject {
     }()
 
     public var todayManualStartTime: String? {
-        guard let start = manualStartDate else { return nil }
-        // Mirror makeCountdownSnapshot's relevance: the start label should be
-        // visible as long as the session is still relevant (ends today or later),
-        // including cross-midnight sessions whose start was yesterday.
-        let end = start.addingTimeInterval(workDurationHours * 3600)
-        guard end >= Calendar.current.startOfDay(for: .now) else { return nil }
-        return Self.manualStartTimeFormatter.string(from: start)
+        guard let session = WorkScheduleCalculator.countdownSession(
+            start: manualStartDate, workDurationHours: workDurationHours, reference: .now
+        ) else { return nil }
+        return Self.manualStartTimeFormatter.string(from: session.start)
     }
 
     private var manualStartDate: Date? {
@@ -278,17 +275,9 @@ public final class CountdownModel: ObservableObject {
         case .fixedSchedule:
             return fixedScheduleBounds(reference: reference)?.end
         case .countdown:
-            guard let start = manualStartDate else {
-                return nil
-            }
-            let end = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
-            // Only consider the session relevant if it ends today or later,
-            // so cross-midnight sessions keep working past midnight and stale
-            // sessions don't linger. Mirrors makeCountdownSnapshot.
-            guard end >= Calendar.current.startOfDay(for: reference) else {
-                return nil
-            }
-            return end
+            return WorkScheduleCalculator.countdownSession(
+                start: manualStartDate, workDurationHours: workDurationHours, reference: reference
+            )?.end
         }
     }
 

@@ -90,6 +90,22 @@ public enum WorkScheduleCalculator {
         )
     }
 
+    /// Resolves the countdown session window [start, start+duration] if it is
+    /// still relevant — i.e. ends today or later. Returns nil when there is no
+    /// manual start, or the session ended before today (stale). This is the
+    /// single source of truth for "is this countdown session active", used by
+    /// snapshot generation, scheduling, and the start-time label.
+    public static func countdownSession(
+        start manualStartDate: Date?,
+        workDurationHours: Double,
+        reference: Date
+    ) -> (start: Date, end: Date)? {
+        guard let start = manualStartDate else { return nil }
+        let end = start.addingTimeInterval(workDurationHours * 3600)
+        guard end >= Calendar.current.startOfDay(for: reference) else { return nil }
+        return (start, end)
+    }
+
     public static func makeCountdownSnapshot(
         now: Date,
         manualStartDate: Date?,
@@ -99,7 +115,9 @@ public enum WorkScheduleCalculator {
         progressDisplayStyle: ProgressDisplayStyle,
         refreshFrequency: RefreshFrequency
     ) -> StatusSnapshot {
-        guard let start = manualStartDate else {
+        guard let session = countdownSession(
+            start: manualStartDate, workDurationHours: workDurationHours, reference: now
+        ) else {
             return StatusSnapshot(
                 status: .idle,
                 labelText: nil,
@@ -109,22 +127,7 @@ public enum WorkScheduleCalculator {
             )
         }
 
-        let end = start.addingTimeInterval(workDurationHours * 3600)
-
-        // A session is relevant if it ends today or later. This supports
-        // cross-midnight work (e.g. start 23:00, 8h) — the session stays
-        // working/finished through the end's day, then resets to idle.
-        guard end >= Calendar.current.startOfDay(for: now) else {
-            return StatusSnapshot(
-                status: .idle,
-                labelText: nil,
-                progressPercent: nil,
-                progressStyle: nil,
-                labelSymbol: "sunrise"
-            )
-        }
-
-        if now >= end {
+        if now >= session.end {
             return StatusSnapshot(
                 status: .finished,
                 labelText: nil,
@@ -135,8 +138,8 @@ public enum WorkScheduleCalculator {
         }
 
         return makeWorkingSnapshot(
-            start: start,
-            end: end,
+            start: session.start,
+            end: session.end,
             now: now,
             showsProgress: showsProgress,
             showsRemainingTime: showsRemainingTime,
