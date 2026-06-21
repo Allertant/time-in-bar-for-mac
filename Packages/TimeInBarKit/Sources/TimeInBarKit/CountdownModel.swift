@@ -132,7 +132,6 @@ public final class CountdownModel: ObservableObject {
     }
 
     private let defaults: UserDefaults
-    private let launchedAt: Date
     private var timer: Timer?
     private var autoQuitTimer: Timer?
     private var wakeObserver: NSObjectProtocol?
@@ -140,7 +139,6 @@ public final class CountdownModel: ObservableObject {
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.launchedAt = .now
         let storedMode = defaults.string(forKey: Keys.trackingMode)
         self.trackingMode = TrackingMode(rawValue: storedMode ?? "") ?? .fixedSchedule
         self.startHour = defaults.object(forKey: Keys.startHour) as? Int ?? 8
@@ -313,14 +311,11 @@ public final class CountdownModel: ObservableObject {
 
         let quitAt = end.addingTimeInterval(60)
 
-        if reference >= quitAt {
-            // Only auto-quit if the app was running before work ended;
-            // launching after work should not trigger an immediate quit.
-            if launchedAt < end {
-                quitApp()
-            }
-            return
-        }
+        // Only schedule a future quit. If we are already past the quit time
+        // (slept through it, or the toggle was enabled after work), do not
+        // quit retroactively — the user expects the feature to apply going
+        // forward, not to kill the current session.
+        guard reference < quitAt else { return }
 
         let interval = max(0, quitAt.timeIntervalSince(reference))
         let nextTimer = Timer(timeInterval: interval, repeats: false) { [weak self] _ in
