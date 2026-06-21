@@ -3,6 +3,8 @@ import Foundation
 
 @MainActor
 public final class CountdownModel: ObservableObject {
+    // MARK: - Config (persisted, each key written in its own didSet)
+
     @Published var trackingMode: TrackingMode {
         didSet {
             defaults.set(trackingMode.rawValue, forKey: Keys.trackingMode)
@@ -100,6 +102,8 @@ public final class CountdownModel: ObservableObject {
 
     public let launchAtLogin = LaunchAtLoginService()
 
+    // MARK: - Derived state
+
     @Published public private(set) var snapshot: StatusSnapshot {
         didSet {
             manageStretchlyIfNeeded(from: oldValue.status, to: snapshot.status)
@@ -185,6 +189,8 @@ public final class CountdownModel: ObservableObject {
         NSApp.terminate(nil)
     }
 
+    // MARK: - Timer engine
+
     public func startManualWork() {
         let previousStatus = snapshot.status
         manualStartDate = .now
@@ -260,6 +266,8 @@ public final class CountdownModel: ObservableObject {
         return Calendar.current.dateInterval(of: component, for: reference)?.end
     }
 
+    // MARK: - Schedule resolution (shared by snapshot, transitions, auto-quit)
+
     private func fixedScheduleBounds(reference: Date) -> (start: Date, end: Date)? {
         WorkScheduleCalculator.currentFixedScheduleWindow(
             now: reference,
@@ -292,6 +300,8 @@ public final class CountdownModel: ObservableObject {
         }
     }
 
+    // MARK: - Auto-quit
+
     private func scheduleAutoQuitIfNeeded(reference: Date = .now) {
         autoQuitTimer?.invalidate()
         autoQuitTimer = nil
@@ -319,6 +329,8 @@ public final class CountdownModel: ObservableObject {
         RunLoop.main.add(nextTimer, forMode: .common)
     }
 
+    // MARK: - Workday reminder
+
     private func updateWorkdayReminderVisibility(oldStatus: WorkStatus) {
         let eligible = showsFullScreenReminderAfterWorkday
             && trackingMode == .countdown
@@ -342,6 +354,8 @@ public final class CountdownModel: ObservableObject {
     private func manageStretchlyIfNeeded(from oldStatus: WorkStatus, to newStatus: WorkStatus) {
         stretchlyManager.manage(from: oldStatus, to: newStatus, enabled: managesStretchly)
     }
+
+    // MARK: - Snapshot generation
 
     private func makeSnapshot(now: Date) -> StatusSnapshot {
         switch trackingMode {
