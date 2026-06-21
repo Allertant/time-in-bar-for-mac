@@ -67,6 +67,19 @@ public struct StatusSnapshot: Equatable {
     public let labelSymbol: String
 }
 
+/// A resolved [start, end] work window, used by both fixed-schedule and
+/// countdown resolvers. Named (rather than a tuple) so it can be tested
+/// and passed around with clear intent.
+public struct ScheduleWindow: Equatable {
+    public let start: Date
+    public let end: Date
+
+    public init(start: Date, end: Date) {
+        self.start = start
+        self.end = end
+    }
+}
+
 /// Display-related settings that always travel together into the calculator.
 public struct DisplayConfig: Equatable {
     public let showsProgress: Bool

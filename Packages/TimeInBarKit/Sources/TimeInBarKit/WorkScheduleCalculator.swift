@@ -11,7 +11,7 @@ public enum WorkScheduleCalculator {
         startMinute: Int,
         endHour: Int,
         endMinute: Int
-    ) -> (start: Date, end: Date)? {
+    ) -> ScheduleWindow? {
         guard let startToday = dateForToday(hour: startHour, minute: startMinute, reference: now),
               let endToday = dateForToday(hour: endHour, minute: endMinute, reference: now) else {
             return nil
@@ -19,7 +19,7 @@ public enum WorkScheduleCalculator {
 
         let isOvernight = startToday >= endToday
         guard isOvernight else {
-            return (startToday, endToday)
+            return ScheduleWindow(start: startToday, end: endToday)
         }
 
         // Overnight: end is the day after start. Three regions relative to `now`:
@@ -28,10 +28,10 @@ public enum WorkScheduleCalculator {
         //   now >= startToday         → in tonight's shift
         if now < startToday {
             // Last night's shift: started yesterday at startHour, ends today at endHour.
-            return (startToday.addingTimeInterval(-.secondsPerDay), endToday)
+            return ScheduleWindow(start: startToday.addingTimeInterval(-.secondsPerDay), end: endToday)
         }
         // Tonight's shift: starts today at startHour, ends tomorrow at endHour.
-        return (startToday, endToday.addingTimeInterval(.secondsPerDay))
+        return ScheduleWindow(start: startToday, end: endToday.addingTimeInterval(.secondsPerDay))
     }
 
     public static func makeFixedScheduleSnapshot(
@@ -92,11 +92,11 @@ public enum WorkScheduleCalculator {
         start manualStartDate: Date?,
         workDurationHours: Double,
         reference: Date
-    ) -> (start: Date, end: Date)? {
+    ) -> ScheduleWindow? {
         guard let start = manualStartDate else { return nil }
         let end = start.addingTimeInterval(workDurationHours * .secondsPerHour)
         guard end >= Calendar.current.startOfDay(for: reference) else { return nil }
-        return (start, end)
+        return ScheduleWindow(start: start, end: end)
     }
 
     public static func makeCountdownSnapshot(

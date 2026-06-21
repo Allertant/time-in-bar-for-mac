@@ -275,7 +275,7 @@ public final class CountdownModel: ObservableObject {
 
     // MARK: - Schedule resolution (shared by snapshot, transitions, auto-quit)
 
-    private func fixedScheduleBounds(reference: Date) -> (start: Date, end: Date)? {
+    private func fixedScheduleBounds(reference: Date) -> ScheduleWindow? {
         WorkScheduleCalculator.currentFixedScheduleWindow(
             now: reference,
             startHour: startHour,
