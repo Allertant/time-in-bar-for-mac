@@ -114,10 +114,12 @@ public final class CountdownModel: ObservableObject {
     }()
 
     public var todayManualStartTime: String? {
-        guard let start = manualStartDate,
-              Calendar.current.isDateInToday(start) else {
-            return nil
-        }
+        guard let start = manualStartDate else { return nil }
+        // Mirror makeCountdownSnapshot's relevance: the start label should be
+        // visible as long as the session is still relevant (ends today or later),
+        // including cross-midnight sessions whose start was yesterday.
+        let end = start.addingTimeInterval(workDurationHours * 3600)
+        guard end >= Calendar.current.startOfDay(for: .now) else { return nil }
         return Self.manualStartTimeFormatter.string(from: start)
     }
 
@@ -329,12 +331,17 @@ public final class CountdownModel: ObservableObject {
     }
 
     private func updateWorkdayReminderVisibility(oldStatus: WorkStatus) {
-        if showsFullScreenReminderAfterWorkday
+        let eligible = showsFullScreenReminderAfterWorkday
             && trackingMode == .countdown
-            && oldStatus == .working
-            && snapshot.status == .finished {
+            && snapshot.status == .finished
+
+        if eligible && oldStatus == .working {
+            // Fresh working→finished transition: present and arm the 3s dismiss.
             workdayReminderController.presentThenDismiss(after: 3)
-        } else {
+        } else if !eligible {
+            // No longer eligible (feature off, mode switched, or left .finished):
+            // hide immediately. While still eligible we leave the controller alone
+            // so the periodic refresh doesn't cut a showing reminder short.
             workdayReminderController.hide()
         }
     }
