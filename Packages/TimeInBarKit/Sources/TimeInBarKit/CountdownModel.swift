@@ -238,7 +238,14 @@ public final class CountdownModel: ObservableObject {
     }
 
     private func refreshSnapshot(now: Date = .now) {
-        snapshot = makeSnapshot(now: now)
+        let next = makeSnapshot(now: now)
+        // Only reassign (and republish) when the snapshot actually changed,
+        // so a static state (e.g. .finished) doesn't re-render the status bar
+        // every second/minute. Side effects are transition-based and compare
+        // oldValue, so skipping equal assignments doesn't affect them.
+        if next != snapshot {
+            snapshot = next
+        }
         scheduleAutoQuitIfNeeded(reference: now)
     }
 

@@ -59,7 +59,7 @@ public enum WorkStatus: Equatable {
     case invalid
 }
 
-public struct StatusSnapshot {
+public struct StatusSnapshot: Equatable {
     public let status: WorkStatus
     public let labelText: String?
     public let progressPercent: Int?
