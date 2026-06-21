@@ -17,17 +17,6 @@ public enum RefreshFrequency: String, CaseIterable, Identifiable {
             return "按秒"
         }
     }
-
-    public var interval: TimeInterval {
-        switch self {
-        case .hour:
-            return 3600
-        case .minute:
-            return 60
-        case .second:
-            return 1
-        }
-    }
 }
 
 public enum ProgressDisplayStyle: String, CaseIterable, Identifiable {
