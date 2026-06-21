@@ -106,6 +106,39 @@ struct WorkScheduleCalculatorTests {
         #expect(snapshot.status == .finished)
     }
 
+    @Test func makeCountdownSnapshotWorkingAcrossMidnight() {
+        // Start at 23:00 yesterday, 8h duration → ends 07:00 today.
+        // At 01:00 today the session should still be working (not reset to idle).
+        let todayStart = Calendar.current.startOfDay(for: .now)
+        let start = todayStart.addingTimeInterval(-1 * 3600)        // 23:00 yesterday
+        let now = todayStart.addingTimeInterval(1 * 3600)           // 01:00 today
+
+        let snapshot = WorkScheduleCalculator.makeCountdownSnapshot(
+            now: now, manualStartDate: start,
+            workDurationHours: 8,
+            showsProgress: false, showsRemainingTime: false,
+            progressDisplayStyle: .percentageText,
+            refreshFrequency: .minute
+        )
+        #expect(snapshot.status == .working)
+    }
+
+    @Test func makeCountdownSnapshotStaleSessionIsIdle() {
+        // A session that ended yesterday is stale → idle.
+        let yesterdayStart = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now))!
+        let start = yesterdayStart.addingTimeInterval(9 * 3600)     // 09:00 yesterday
+        let now = Calendar.current.startOfDay(for: .now).addingTimeInterval(12 * 3600)  // 12:00 today
+
+        let snapshot = WorkScheduleCalculator.makeCountdownSnapshot(
+            now: now, manualStartDate: start,
+            workDurationHours: 8,  // ended 17:00 yesterday
+            showsProgress: false, showsRemainingTime: false,
+            progressDisplayStyle: .percentageText,
+            refreshFrequency: .minute
+        )
+        #expect(snapshot.status == .idle)
+    }
+
     // MARK: - makeFixedScheduleSnapshot
 
     @Test func makeFixedScheduleSnapshotNotStarted() {

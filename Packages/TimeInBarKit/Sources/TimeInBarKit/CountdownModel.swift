@@ -277,11 +277,17 @@ public final class CountdownModel: ObservableObject {
         case .fixedSchedule:
             return fixedScheduleBounds(reference: reference)?.end
         case .countdown:
-            guard let start = manualStartDate,
-                  Calendar.current.isDateInToday(start) else {
+            guard let start = manualStartDate else {
                 return nil
             }
-            return start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
+            let end = start.addingTimeInterval(TimeInterval(workDurationHours) * 3600)
+            // Only consider the session relevant if it ends today or later,
+            // so cross-midnight sessions keep working past midnight and stale
+            // sessions don't linger. Mirrors makeCountdownSnapshot.
+            guard end >= Calendar.current.startOfDay(for: reference) else {
+                return nil
+            }
+            return end
         }
     }
 

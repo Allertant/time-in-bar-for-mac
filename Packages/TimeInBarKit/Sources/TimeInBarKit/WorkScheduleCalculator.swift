@@ -64,8 +64,7 @@ public enum WorkScheduleCalculator {
         progressDisplayStyle: ProgressDisplayStyle,
         refreshFrequency: RefreshFrequency
     ) -> StatusSnapshot {
-        guard let start = manualStartDate,
-              Calendar.current.isDateInToday(start) else {
+        guard let start = manualStartDate else {
             return StatusSnapshot(
                 status: .idle,
                 labelText: nil,
@@ -76,6 +75,19 @@ public enum WorkScheduleCalculator {
         }
 
         let end = start.addingTimeInterval(workDurationHours * 3600)
+
+        // A session is relevant if it ends today or later. This supports
+        // cross-midnight work (e.g. start 23:00, 8h) — the session stays
+        // working/finished through the end's day, then resets to idle.
+        guard end >= Calendar.current.startOfDay(for: now) else {
+            return StatusSnapshot(
+                status: .idle,
+                labelText: nil,
+                progressPercent: nil,
+                progressStyle: nil,
+                labelSymbol: "sunrise"
+            )
+        }
 
         if now >= end {
             return StatusSnapshot(
