@@ -358,6 +358,12 @@ public final class CountdownModel: ObservableObject {
     // MARK: - Snapshot generation
 
     private func makeSnapshot(now: Date) -> StatusSnapshot {
+        let display = DisplayConfig(
+            showsProgress: showsProgress,
+            showsRemainingTime: showsRemainingTime,
+            progressDisplayStyle: progressDisplayStyle,
+            refreshFrequency: refreshFrequency
+        )
         switch trackingMode {
         case .fixedSchedule:
             return WorkScheduleCalculator.makeFixedScheduleSnapshot(
@@ -366,20 +372,14 @@ public final class CountdownModel: ObservableObject {
                 startMinute: startMinute,
                 endHour: endHour,
                 endMinute: endMinute,
-                showsProgress: showsProgress,
-                showsRemainingTime: showsRemainingTime,
-                progressDisplayStyle: progressDisplayStyle,
-                refreshFrequency: refreshFrequency
+                display: display
             )
         case .countdown:
             return WorkScheduleCalculator.makeCountdownSnapshot(
                 now: now,
                 manualStartDate: manualStartDate,
                 workDurationHours: workDurationHours,
-                showsProgress: showsProgress,
-                showsRemainingTime: showsRemainingTime,
-                progressDisplayStyle: progressDisplayStyle,
-                refreshFrequency: refreshFrequency
+                display: display
             )
         }
     }

@@ -4,6 +4,20 @@ import Testing
 
 struct WorkScheduleCalculatorTests {
 
+    private func display(
+        showsProgress: Bool = false,
+        showsRemainingTime: Bool = false,
+        progressDisplayStyle: ProgressDisplayStyle = .percentageText,
+        refreshFrequency: RefreshFrequency = .minute
+    ) -> DisplayConfig {
+        DisplayConfig(
+            showsProgress: showsProgress,
+            showsRemainingTime: showsRemainingTime,
+            progressDisplayStyle: progressDisplayStyle,
+            refreshFrequency: refreshFrequency
+        )
+    }
+
     // MARK: - formattedRemainingTime
 
     @Test func formattedRemainingTimeHours() {
@@ -69,9 +83,7 @@ struct WorkScheduleCalculatorTests {
 
         let snapshot = WorkScheduleCalculator.makeWorkingSnapshot(
             start: start, end: end, now: now,
-            showsProgress: true, showsRemainingTime: true,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display(showsProgress: true, showsRemainingTime: true)
         )
 
         #expect(snapshot.status == .working)
@@ -85,9 +97,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeCountdownSnapshot(
             now: Date(), manualStartDate: nil,
             workDurationHours: 8,
-            showsProgress: true, showsRemainingTime: true,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display(showsProgress: true, showsRemainingTime: true)
         )
         #expect(snapshot.status == .idle)
     }
@@ -99,9 +109,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeCountdownSnapshot(
             now: now, manualStartDate: start,
             workDurationHours: 8,
-            showsProgress: false, showsRemainingTime: false,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display()
         )
         #expect(snapshot.status == .finished)
     }
@@ -116,9 +124,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeCountdownSnapshot(
             now: now, manualStartDate: start,
             workDurationHours: 8,
-            showsProgress: false, showsRemainingTime: false,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display()
         )
         #expect(snapshot.status == .working)
     }
@@ -132,9 +138,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeCountdownSnapshot(
             now: now, manualStartDate: start,
             workDurationHours: 8,  // ended 17:00 yesterday
-            showsProgress: false, showsRemainingTime: false,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display()
         )
         #expect(snapshot.status == .idle)
     }
@@ -148,9 +152,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeFixedScheduleSnapshot(
             now: morning, startHour: 8, startMinute: 0,
             endHour: 17, endMinute: 0,
-            showsProgress: false, showsRemainingTime: false,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display()
         )
         #expect(snapshot.status == .notStarted)
     }
@@ -163,9 +165,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeFixedScheduleSnapshot(
             now: lateEvening, startHour: 22, startMinute: 0,
             endHour: 6, endMinute: 0,
-            showsProgress: false, showsRemainingTime: false,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display()
         )
         #expect(snapshot.status == .working)
     }
@@ -178,9 +178,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeFixedScheduleSnapshot(
             now: earlyMorning, startHour: 22, startMinute: 0,
             endHour: 6, endMinute: 0,
-            showsProgress: false, showsRemainingTime: false,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display()
         )
         #expect(snapshot.status == .working)
     }
@@ -193,9 +191,7 @@ struct WorkScheduleCalculatorTests {
         let snapshot = WorkScheduleCalculator.makeFixedScheduleSnapshot(
             now: noon, startHour: 22, startMinute: 0,
             endHour: 6, endMinute: 0,
-            showsProgress: false, showsRemainingTime: false,
-            progressDisplayStyle: .percentageText,
-            refreshFrequency: .minute
+            display: display()
         )
         #expect(snapshot.status == .finished)
     }

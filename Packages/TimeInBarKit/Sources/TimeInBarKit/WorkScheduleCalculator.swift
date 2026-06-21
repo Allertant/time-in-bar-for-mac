@@ -41,10 +41,7 @@ public enum WorkScheduleCalculator {
         startMinute: Int,
         endHour: Int,
         endMinute: Int,
-        showsProgress: Bool,
-        showsRemainingTime: Bool,
-        progressDisplayStyle: ProgressDisplayStyle,
-        refreshFrequency: RefreshFrequency
+        display: DisplayConfig
     ) -> StatusSnapshot {
         guard let window = currentFixedScheduleWindow(
             now: now, startHour: startHour, startMinute: startMinute,
@@ -83,10 +80,7 @@ public enum WorkScheduleCalculator {
             start: window.start,
             end: window.end,
             now: now,
-            showsProgress: showsProgress,
-            showsRemainingTime: showsRemainingTime,
-            progressDisplayStyle: progressDisplayStyle,
-            refreshFrequency: refreshFrequency
+            display: display
         )
     }
 
@@ -110,10 +104,7 @@ public enum WorkScheduleCalculator {
         now: Date,
         manualStartDate: Date?,
         workDurationHours: Double,
-        showsProgress: Bool,
-        showsRemainingTime: Bool,
-        progressDisplayStyle: ProgressDisplayStyle,
-        refreshFrequency: RefreshFrequency
+        display: DisplayConfig
     ) -> StatusSnapshot {
         guard let session = countdownSession(
             start: manualStartDate, workDurationHours: workDurationHours, reference: now
@@ -141,10 +132,7 @@ public enum WorkScheduleCalculator {
             start: session.start,
             end: session.end,
             now: now,
-            showsProgress: showsProgress,
-            showsRemainingTime: showsRemainingTime,
-            progressDisplayStyle: progressDisplayStyle,
-            refreshFrequency: refreshFrequency
+            display: display
         )
     }
 
@@ -152,34 +140,31 @@ public enum WorkScheduleCalculator {
         start: Date,
         end: Date,
         now: Date,
-        showsProgress: Bool,
-        showsRemainingTime: Bool,
-        progressDisplayStyle: ProgressDisplayStyle,
-        refreshFrequency: RefreshFrequency
+        display: DisplayConfig
     ) -> StatusSnapshot {
         let total = end.timeIntervalSince(start)
         let remaining = end.timeIntervalSince(now)
         let elapsed = now.timeIntervalSince(start)
         let progress = max(0, min(100, Int((elapsed / total) * 100)))
-        let timeText = formattedRemainingTime(seconds: remaining, frequency: refreshFrequency)
+        let timeText = formattedRemainingTime(seconds: remaining, frequency: display.refreshFrequency)
 
         let labelText: String?
         let progressPercent: Int?
         let progressStyle: ProgressDisplayStyle?
 
-        if showsProgress {
-            switch progressDisplayStyle {
+        if display.showsProgress {
+            switch display.progressDisplayStyle {
             case .percentageText:
-                labelText = showsRemainingTime ? "\(timeText) · \(progress)%" : "\(progress)%"
+                labelText = display.showsRemainingTime ? "\(timeText) · \(progress)%" : "\(progress)%"
                 progressPercent = progress
-                progressStyle = progressDisplayStyle
+                progressStyle = display.progressDisplayStyle
             case .pieChart:
-                labelText = showsRemainingTime ? timeText : ""
+                labelText = display.showsRemainingTime ? timeText : ""
                 progressPercent = progress
-                progressStyle = progressDisplayStyle
+                progressStyle = display.progressDisplayStyle
             }
         } else {
-            labelText = showsRemainingTime ? timeText : nil
+            labelText = display.showsRemainingTime ? timeText : nil
             progressPercent = nil
             progressStyle = nil
         }

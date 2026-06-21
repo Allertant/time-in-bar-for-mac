@@ -77,3 +77,23 @@ public struct StatusSnapshot {
     public let progressStyle: ProgressDisplayStyle?
     public let labelSymbol: String
 }
+
+/// Display-related settings that always travel together into the calculator.
+public struct DisplayConfig: Equatable {
+    public let showsProgress: Bool
+    public let showsRemainingTime: Bool
+    public let progressDisplayStyle: ProgressDisplayStyle
+    public let refreshFrequency: RefreshFrequency
+
+    public init(
+        showsProgress: Bool,
+        showsRemainingTime: Bool,
+        progressDisplayStyle: ProgressDisplayStyle,
+        refreshFrequency: RefreshFrequency
+    ) {
+        self.showsProgress = showsProgress
+        self.showsRemainingTime = showsRemainingTime
+        self.progressDisplayStyle = progressDisplayStyle
+        self.refreshFrequency = refreshFrequency
+    }
+}
