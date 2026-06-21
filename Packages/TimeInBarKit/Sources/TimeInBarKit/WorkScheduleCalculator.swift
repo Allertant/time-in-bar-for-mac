@@ -22,17 +22,16 @@ public enum WorkScheduleCalculator {
             return (startToday, endToday)
         }
 
-        let day: TimeInterval = 86400
         // Overnight: end is the day after start. Three regions relative to `now`:
         //   now < endToday            → still in last night's shift
         //   endToday <= now < startToday → daytime, between shifts (finished)
         //   now >= startToday         → in tonight's shift
         if now < startToday {
             // Last night's shift: started yesterday at startHour, ends today at endHour.
-            return (startToday.addingTimeInterval(-day), endToday)
+            return (startToday.addingTimeInterval(-.secondsPerDay), endToday)
         }
         // Tonight's shift: starts today at startHour, ends tomorrow at endHour.
-        return (startToday, endToday.addingTimeInterval(day))
+        return (startToday, endToday.addingTimeInterval(.secondsPerDay))
     }
 
     public static func makeFixedScheduleSnapshot(
@@ -95,7 +94,7 @@ public enum WorkScheduleCalculator {
         reference: Date
     ) -> (start: Date, end: Date)? {
         guard let start = manualStartDate else { return nil }
-        let end = start.addingTimeInterval(workDurationHours * 3600)
+        let end = start.addingTimeInterval(workDurationHours * .secondsPerHour)
         guard end >= Calendar.current.startOfDay(for: reference) else { return nil }
         return (start, end)
     }
@@ -179,27 +178,26 @@ public enum WorkScheduleCalculator {
     }
 
     public static func formattedRemainingTime(seconds: TimeInterval, frequency: RefreshFrequency) -> String {
-        let rounded: Int
+        let minute = 60
+        let hour = 60 * minute
+        let rounded = max(0, Int(seconds.rounded(.down)))
 
         switch frequency {
         case .hour:
-            rounded = Int(seconds.rounded(.down))
-            let hours = max(0, rounded / 3600)
+            let hours = rounded / hour
             return hours > 0 ? "\(hours)h" : "<1h"
         case .minute:
-            rounded = Int(seconds.rounded(.down))
-            let totalMinutes = max(0, rounded / 60)
-            let hours = totalMinutes / 60
-            let minutes = totalMinutes % 60
+            let totalMinutes = rounded / minute
+            let hours = totalMinutes / minute
+            let minutes = totalMinutes % minute
             if hours > 0 {
                 return minutes > 0 ? "\(hours)h\(minutes)m" : "\(hours)h"
             }
             return minutes > 0 ? "\(minutes)m" : "<1m"
         case .second:
-            rounded = max(0, Int(seconds.rounded(.down)))
-            let hours = rounded / 3600
-            let minutes = (rounded % 3600) / 60
-            let secs = rounded % 60
+            let hours = rounded / hour
+            let minutes = (rounded % hour) / minute
+            let secs = rounded % minute
             if hours > 0 {
                 return "\(hours)h\(minutes)m\(secs)s"
             }

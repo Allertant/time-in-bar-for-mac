@@ -311,7 +311,7 @@ public final class CountdownModel: ObservableObject {
             return
         }
 
-        let quitAt = end.addingTimeInterval(60)
+        let quitAt = end.addingTimeInterval(.secondsPerMinute)
 
         // Only schedule a future quit. If we are already past the quit time
         // (slept through it, or the toggle was enabled after work), do not

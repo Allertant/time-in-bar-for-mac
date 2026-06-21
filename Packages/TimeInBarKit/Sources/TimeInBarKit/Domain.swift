@@ -97,3 +97,12 @@ public struct DisplayConfig: Equatable {
         self.refreshFrequency = refreshFrequency
     }
 }
+
+extension TimeInterval {
+    /// One minute, in seconds.
+    public static var secondsPerMinute: TimeInterval { 60 }
+    /// One hour, in seconds.
+    public static var secondsPerHour: TimeInterval { 3600 }
+    /// One day, in seconds.
+    public static var secondsPerDay: TimeInterval { 86400 }
+}
