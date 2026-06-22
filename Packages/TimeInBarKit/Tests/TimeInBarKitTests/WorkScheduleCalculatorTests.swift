@@ -195,4 +195,82 @@ struct WorkScheduleCalculatorTests {
         )
         #expect(snapshot.status == .finished)
     }
+
+    // MARK: - currentFixedScheduleWindow (direct bounds)
+
+    @Test func fixedScheduleWindowDayShiftIsToday() {
+        // Day shift 08:00→17:00; window is today's [start, end].
+        let today = Calendar.current.startOfDay(for: Date())
+        let noon = today.addingTimeInterval(12 * .secondsPerHour)
+        let expectedStart = today.addingTimeInterval(8 * .secondsPerHour)
+        let expectedEnd = today.addingTimeInterval(17 * .secondsPerHour)
+
+        let window = WorkScheduleCalculator.currentFixedScheduleWindow(
+            now: noon, startHour: 8, startMinute: 0,
+            endHour: 17, endMinute: 0
+        )
+        #expect(window == ScheduleWindow(start: expectedStart, end: expectedEnd))
+    }
+
+    @Test func fixedScheduleWindowOvernightEarlyMorningIsLastNight() {
+        // Overnight 22:00→06:00. At 03:00 the relevant shift started yesterday at 22:00.
+        let today = Calendar.current.startOfDay(for: Date())
+        let earlyMorning = today.addingTimeInterval(3 * .secondsPerHour)
+        let expectedStart = today.addingTimeInterval(-2 * .secondsPerHour)         // 22:00 yesterday
+        let expectedEnd = today.addingTimeInterval(6 * .secondsPerHour)            // 06:00 today
+
+        let window = WorkScheduleCalculator.currentFixedScheduleWindow(
+            now: earlyMorning, startHour: 22, startMinute: 0,
+            endHour: 6, endMinute: 0
+        )
+        #expect(window == ScheduleWindow(start: expectedStart, end: expectedEnd))
+    }
+
+    @Test func fixedScheduleWindowOvernightEveningIsTonight() {
+        // Overnight 22:00→06:00. At 23:00 the relevant shift started today.
+        let today = Calendar.current.startOfDay(for: Date())
+        let lateEvening = today.addingTimeInterval(23 * .secondsPerHour)
+        let expectedStart = today.addingTimeInterval(22 * .secondsPerHour)         // 22:00 today
+        let expectedEnd = today.addingTimeInterval((24 + 6) * .secondsPerHour)     // 06:00 tomorrow
+
+        let window = WorkScheduleCalculator.currentFixedScheduleWindow(
+            now: lateEvening, startHour: 22, startMinute: 0,
+            endHour: 6, endMinute: 0
+        )
+        #expect(window == ScheduleWindow(start: expectedStart, end: expectedEnd))
+    }
+
+    // MARK: - countdownSession (direct bounds)
+
+    @Test func countdownSessionNilWhenNoStart() {
+        #expect(WorkScheduleCalculator.countdownSession(start: nil, workDurationHours: 8, reference: .now) == nil)
+    }
+
+    @Test func countdownSessionRelevantReturnsWindow() {
+        let start = Calendar.current.startOfDay(for: .now).addingTimeInterval(9 * .secondsPerHour)  // 09:00 today
+        let now = start.addingTimeInterval(2 * .secondsPerHour)                                      // 11:00 today
+        let expectedEnd = start.addingTimeInterval(8 * .secondsPerHour)
+
+        let window = WorkScheduleCalculator.countdownSession(start: start, workDurationHours: 8, reference: now)
+        #expect(window == ScheduleWindow(start: start, end: expectedEnd))
+    }
+
+    @Test func countdownSessionStaleReturnsNil() {
+        // Started 09:00 yesterday, 8h → ended 17:00 yesterday; now today → stale.
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now))!
+        let start = yesterday.addingTimeInterval(9 * .secondsPerHour)
+
+        #expect(WorkScheduleCalculator.countdownSession(start: start, workDurationHours: 8, reference: .now) == nil)
+    }
+
+    @Test func countdownSessionCrossMidnightReturnsWindow() {
+        // Start 23:00 yesterday, 8h → ends 07:00 today; still relevant today.
+        let today = Calendar.current.startOfDay(for: .now)
+        let start = today.addingTimeInterval(-1 * .secondsPerHour)        // 23:00 yesterday
+        let now = today.addingTimeInterval(1 * .secondsPerHour)           // 01:00 today
+        let expectedEnd = start.addingTimeInterval(8 * .secondsPerHour)
+
+        let window = WorkScheduleCalculator.countdownSession(start: start, workDurationHours: 8, reference: now)
+        #expect(window == ScheduleWindow(start: start, end: expectedEnd))
+    }
 }
